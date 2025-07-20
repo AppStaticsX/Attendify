@@ -112,7 +112,7 @@ class EventDatabase extends ChangeNotifier {
   }
 
   Future<void> updateEventCompletion(int id, bool isCompleted) async {
-    final eventIndex = _findHabitIndexById(id);
+    final eventIndex = _findEventIndexById(id);
 
     if (eventIndex != -1) {
       final event = _eventBox.getAt(eventIndex);
@@ -127,7 +127,7 @@ class EventDatabase extends ChangeNotifier {
         final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
         if (isCompleted) {
-          bool alreadyCompleted = habit.completedDays!.any((day) =>
+          bool alreadyCompleted = event.completedDays!.any((day) =>
           day.date.year == today.year &&
               day.date.month == today.month &&
               day.date.day == today.day);
@@ -135,52 +135,50 @@ class EventDatabase extends ChangeNotifier {
           if (!alreadyCompleted) {
             final completedDay = CompletedDay(date: today);
             await completedDaysBox.add(completedDay);
-            habit.completedDays!.add(completedDay);
+            event.completedDays!.add(completedDay);
             // Remove from notConductedDays if present
-            final notConductedToRemove = habit.notConductedDays!.where((day) =>
+            final notConductedToRemove = event.notConductedDays!.where((day) =>
             day.date.year == today.year &&
                 day.date.month == today.month &&
                 day.date.day == today.day).toList();
             for (var day in notConductedToRemove) {
-              habit.notConductedDays!.remove(day);
+              event.notConductedDays!.remove(day);
               await day.delete();
             }
           }
         } else {
-          final toRemove = habit.completedDays!.where((day) =>
+          final toRemove = event.completedDays!.where((day) =>
           day.date.year == today.year &&
               day.date.month == today.month &&
               day.date.day == today.day).toList();
 
           for (var day in toRemove) {
-            habit.completedDays!.remove(day);
+            event.completedDays!.remove(day);
             await day.delete();
           }
         }
 
-        await habit.save();
+        await event.save();
       }
     }
 
-    await readHabits();
+    await readEvents();
   }
 
-  Future<void> markHabitNotConducted(int id) async {
-    final habitIndex = _findHabitIndexById(id);
+  Future<void> markEventNotConducted(int id) async {
+    final eventIndex = _findEventIndexById(id);
 
-    if (habitIndex != -1) {
-      final habit = _habitsBox.getAt(habitIndex);
+    if (eventIndex != -1) {
+      final event = _eventBox.getAt(eventIndex);
 
-      if (habit != null) {
-        final completedDaysBox = await _openCompletedDaysBox(habit.id);
+      if (event != null) {
+        final completedDaysBox = await _openCompletedDaysBox(event.id);
 
-        if (habit.notConductedDays == null || habit.notConductedDays!.box == null) {
-          habit.notConductedDays = HiveList(completedDaysBox);
-        }
+        event.notConductedDays ??= HiveList(completedDaysBox);
 
         final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
-        bool alreadyNotConducted = habit.notConductedDays!.any((day) =>
+        bool alreadyNotConducted = event.notConductedDays!.any((day) =>
         day.date.year == today.year &&
             day.date.month == today.month &&
             day.date.day == today.day);
@@ -188,46 +186,44 @@ class EventDatabase extends ChangeNotifier {
         if (!alreadyNotConducted) {
           final notConductedDay = CompletedDay(date: today);
           await completedDaysBox.add(notConductedDay);
-          habit.notConductedDays!.add(notConductedDay);
+          event.notConductedDays!.add(notConductedDay);
           // Remove from completedDays if present
-          final completedToRemove = habit.completedDays!.where((day) =>
+          final completedToRemove = event.completedDays!.where((day) =>
           day.date.year == today.year &&
               day.date.month == today.month &&
               day.date.day == today.day).toList();
           for (var day in completedToRemove) {
-            habit.completedDays!.remove(day);
+            event.completedDays!.remove(day);
             await day.delete();
           }
         }
 
-        await habit.save();
+        await event.save();
       }
     }
 
-    await readHabits();
+    await readEvents();
   }
 
-  Future<void> updateHabit(int id, String newName, List<String> newAssignedDays, String conductorName) async {
-    final habitIndex = _findHabitIndexById(id);
+  Future<void> updateEvent(int id, String newName, List<String> newAssignedDays, String conductorName) async {
+    final eventIndex = _findEventIndexById(id);
 
-    if (habitIndex != -1) {
-      final habit = _habitsBox.getAt(habitIndex);
+    if (eventIndex != -1) {
+      final event = _eventBox.getAt(eventIndex);
 
-      if (habit != null) {
-        debugPrint('Updating habit ${habit.name} to $newName, assignedDays: $newAssignedDays');
-        habit.name = newName;
-        habit.conductorName = conductorName;
-        habit.assignedDays = newAssignedDays;
-        if (habit.notConductedDays == null || habit.notConductedDays!.box == null) {
-          final completedDaysBox = await _openCompletedDaysBox(habit.id);
-          habit.notConductedDays = HiveList(completedDaysBox);
+      if (event != null) {
+        event.name = newName;
+        event.conductorName = conductorName;
+        event.assignedDays = newAssignedDays;
+        if (event.notConductedDays == null) {
+          final completedDaysBox = await _openCompletedDaysBox(event.id);
+          event.notConductedDays = HiveList(completedDaysBox);
         }
-        await habit.save();
-        debugPrint('Habit updated: ${habit.name}, assignedDays: ${habit.assignedDays}');
+        await event.save();
       }
     }
 
-    await readHabits();
+    await readEvents();
   }
 
   Future<void> deleteHabit(int id) async {
