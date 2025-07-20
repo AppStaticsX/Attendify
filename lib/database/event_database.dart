@@ -76,63 +76,53 @@ class EventDatabase extends ChangeNotifier {
     try {
       currentEvents.clear();
 
-      if (_eventBox.isOpen && _habitsBox.isNotEmpty) {
-        final habits = _habitsBox.values.toList();
+      if (_eventBox.isOpen && _eventBox.isNotEmpty) {
+        final events = _eventBox.values.toList();
 
-        for (var habit in habits) {
-          debugPrint('Reading habit: ${habit.name}, assignedDays: ${habit.assignedDays}');
+        for (var event in events) {
           try {
-            final completedDaysBox = await _openCompletedDaysBox(habit.id);
+            final completedDaysBox = await _openCompletedDaysBox(event.id);
 
-            if (habit.completedDays == null || habit.completedDays!.box == null) {
-              final existingData = habit.completedDays?.toList() ?? [];
-              habit.completedDays = HiveList(completedDaysBox, objects: existingData);
-              await habit.save();
-              debugPrint('Reconnected completedDays for habit ${habit.name}: ${habit.assignedDays}');
+            if (event.completedDays == null) {
+              final existingData = event.completedDays?.toList() ?? [];
+              event.completedDays = HiveList(completedDaysBox, objects: existingData);
+              await event.save();
             }
 
-            if (habit.notConductedDays == null || habit.notConductedDays!.box == null) {
-              final existingData = habit.notConductedDays?.toList() ?? [];
-              habit.notConductedDays = HiveList(completedDaysBox, objects: existingData);
-              await habit.save();
-              debugPrint('Reconnected notConductedDays for habit ${habit.name}');
+            if (event.notConductedDays == null) {
+              final existingData = event.notConductedDays?.toList() ?? [];
+              event.notConductedDays = HiveList(completedDaysBox, objects: existingData);
+              await event.save();
             }
           } catch (e) {
-            debugPrint('Error processing habit ${habit.name}: $e');
-            final completedDaysBox = await _openCompletedDaysBox(habit.id);
-            habit.completedDays = HiveList(completedDaysBox);
-            habit.notConductedDays = HiveList(completedDaysBox);
-            await habit.save();
+            final completedDaysBox = await _openCompletedDaysBox(event.id);
+            event.completedDays = HiveList(completedDaysBox);
+            event.notConductedDays = HiveList(completedDaysBox);
+            await event.save();
           }
         }
 
-        currentHabits.addAll(habits);
-        debugPrint('Loaded ${currentHabits.length} habits');
+        currentEvents.addAll(events);
       }
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Error reading habits: $e');
       notifyListeners();
     }
   }
 
-  Future<void> updateHabitCompletion(int id, bool isCompleted) async {
-    final habitIndex = _findHabitIndexById(id);
+  Future<void> updateEventCompletion(int id, bool isCompleted) async {
+    final eventIndex = _findHabitIndexById(id);
 
-    if (habitIndex != -1) {
-      final habit = _habitsBox.getAt(habitIndex);
+    if (eventIndex != -1) {
+      final event = _eventBox.getAt(eventIndex);
 
-      if (habit != null) {
-        final completedDaysBox = await _openCompletedDaysBox(habit.id);
+      if (event != null) {
+        final completedDaysBox = await _openCompletedDaysBox(event.id);
 
-        if (habit.completedDays == null || habit.completedDays!.box == null) {
-          habit.completedDays = HiveList(completedDaysBox);
-        }
+        event.completedDays ??= HiveList(completedDaysBox);
 
-        if (habit.notConductedDays == null || habit.notConductedDays!.box == null) {
-          habit.notConductedDays = HiveList(completedDaysBox);
-        }
+        event.notConductedDays ??= HiveList(completedDaysBox);
 
         final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
 
