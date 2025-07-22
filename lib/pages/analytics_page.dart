@@ -311,6 +311,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   Widget _buildDayWiseCompletion(Event event) {
+    bool isPercentageError = false;
+
     return FutureBuilder<Map<String, Map<String, int>>>(
       future: _calculateDayWiseCompletion(event),
       builder: (context, snapshot) {
@@ -364,7 +366,14 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
+                          stats['completed']! >= 0 && stats['total'] == 0?
                           Text(
+                            'An Error Occurred!',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ) : Text(
                             '${stats['completed']}/${stats['total']} (${percentage.toStringAsFixed(1)}%)',
                             style: TextStyle(
                               fontSize: 12,
