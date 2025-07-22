@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:attendify/util/habit_util.dart';
+import 'package:attendify/util/event_util.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../models/event.dart';
@@ -11,8 +11,8 @@ class EventTile extends StatelessWidget {
   final bool isCompleted;
   final Event event;
   final void Function(bool?)? onChanged;
-  final void Function(BuildContext)? editHabit;
-  final void Function(BuildContext)? deleteHabit;
+  final void Function(BuildContext)? editEvent;
+  final void Function(BuildContext)? deleteEvent;
   final void Function(BuildContext)? markNotConducted;
 
   const EventTile({
@@ -21,8 +21,8 @@ class EventTile extends StatelessWidget {
     required this.isCompleted,
     required this.event,
     required this.onChanged,
-    required this.editHabit,
-    required this.deleteHabit,
+    required this.editEvent,
+    required this.deleteEvent,
     required this.conductorName,
     this.markNotConducted,
   });
@@ -54,7 +54,7 @@ class EventTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isNotConductedToday = isHabitNotConductedToday(event);
+    final bool isNotConductedToday = isEventNotConductedToday(event);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
@@ -64,7 +64,7 @@ class EventTile extends StatelessWidget {
           motion: StretchMotion(),
           children: [
             SlidableAction(
-              onPressed: isNotConductedToday ? null : editHabit,
+              onPressed: isNotConductedToday ? null : editEvent,
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(8), bottomLeft: Radius.circular(8)),
               backgroundColor: Colors.grey.shade800,
@@ -72,7 +72,7 @@ class EventTile extends StatelessWidget {
               icon: Iconsax.edit_2,
             ),
             SlidableAction(
-              onPressed: isNotConductedToday ? null : deleteHabit,
+              onPressed: isNotConductedToday ? null : deleteEvent,
               borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(8), bottomRight: Radius.circular(8)),
               backgroundColor: Colors.red.shade800,
@@ -117,7 +117,7 @@ class EventTile extends StatelessWidget {
                   conductorName,
                   style: TextStyle(
                     color: isNotConductedToday
-                        ? Colors.grey.withOpacity(0.7)
+                        ? Colors.grey.withValues(alpha: 0.7)
                         : Colors.grey,
                   ),
                 ),

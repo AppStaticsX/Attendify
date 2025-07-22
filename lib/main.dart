@@ -72,7 +72,7 @@ class _AppInitializerState extends State<AppInitializer> {
       await habitDb.saveFirstLaunchDate();
 
       // Load habits from database
-      await habitDb.readHabits();
+      await habitDb.readEvents();
 
       // Check welcome status
       await _checkWelcomeStatus();

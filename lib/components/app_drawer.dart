@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:attendify/pages/analytics_page.dart';
 import 'package:attendify/pages/settings_page.dart';
 import 'package:attendify/themes/theme_provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -25,21 +25,12 @@ class AppDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // SVG Logo - Replace with your own SVG
-                  /*SvgPicture.asset(
-                    'assets/icon/Activity_Logo.svg',  // Replace with your SVG path
-                    height: 80,
-                    width: 80,
-                    colorFilter: ColorFilter.mode(
-                      Colors.green,
-                      BlendMode.srcIn,
-                    ),
-                  ),*/
                   const SizedBox(height: 16),
-                  SvgPicture.asset(
-                    'assets/icon/app_logo.svg',
-                    width: 100,
-                    height: 100,
+                  Lottie.asset(
+                    'assets/lottie/app_logo_anim.json',
+                    height: 120,
+                    width: 120,
+                    repeat: true
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -141,26 +132,6 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
-
-                /*ListTile(
-                  leading: const Icon(
-                    Icons.code,
-                    color: Colors.grey,
-                    size: 28,
-                  ),
-                  title: Text(
-                    'A B O U T',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.inversePrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),*/
               ],
             ),
           ),

@@ -10,7 +10,7 @@ import 'package:attendify/components/heatmap.dart';
 import 'package:attendify/database/event_database.dart';
 import 'package:attendify/models/event.dart';
 import 'package:attendify/pages/settings_page.dart';
-import 'package:attendify/util/habit_util.dart';
+import 'package:attendify/util/event_util.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -34,16 +34,33 @@ class _HomePageState extends State<HomePage> {
   // Add current displayed month state
   DateTime _currentDisplayedMonth = DateTime.now();
 
-  // Add time picker related variables
-  bool _hasShownTimeDialog = false;
+  String userName = '';
+
+  // Add GlobalKey for HeatMapCalendar
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadHabits();
+      _loadEvents();
+      _loadUserName();
       _checkAndShowTimeDialog();
     });
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? username = prefs.getString('userNAME');
+
+    if (mounted) {
+      setState(() {
+        userName = username ?? ''; // Handle null case properly
+      });
+    }
+  }
+
+  void _updateUserName() {
+    _loadUserName();
   }
 
   // Check if time dialog has been shown before
@@ -116,22 +133,21 @@ class _HomePageState extends State<HomePage> {
     await prefs.setInt('schedule_start_date', dateInMillis);
   }
 
-  Future<void> _loadHabits() async {
+  Future<void> _loadEvents() async {
     try {
-      await Provider.of<HabitDatabase>(context, listen: false).readHabits();
+      await Provider.of<EventDatabase>(context, listen: false).readEvents();
     } catch (e) {
-      debugPrint('Error loading habits: $e');
-      _showCustomToast('Error loading habits', Iconsax.close_circle);
+      _showCustomToast('Error loading events.', Iconsax.close_circle);
     }
   }
 
-  // Add methods to handle month navigation
+  // Modified methods to handle month navigation
   void _goToPreviousMonth() {
     setState(() {
       _currentDisplayedMonth = DateTime(
         _currentDisplayedMonth.year,
-        _currentDisplayedMonth.month - 1,
-        1,
+        _currentDisplayedMonth.month ,
+        _currentDisplayedMonth.day - 30
       );
     });
   }
@@ -140,8 +156,8 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _currentDisplayedMonth = DateTime(
         _currentDisplayedMonth.year,
-        _currentDisplayedMonth.month + 1,
-        1,
+        _currentDisplayedMonth.month,
+          _currentDisplayedMonth.day + 30,
       );
     });
   }
@@ -170,7 +186,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void createNewHabit() {
+  void createNewEvent() {
     // Reset selected days
     _selectedDays.fillRange(0, _selectedDays.length, false);
 
@@ -238,7 +254,7 @@ class _HomePageState extends State<HomePage> {
                   actions: [
                     MaterialButton(
                       onPressed: () async {
-                        String newHabitName = textController.text.trim();
+                        String newEventName = textController.text.trim();
                         String conductorName = textController2.text.trim();
                         List<String> selectedDays = [];
                         for (int i = 0; i < _selectedDays.length; i++) {
@@ -246,27 +262,24 @@ class _HomePageState extends State<HomePage> {
                             selectedDays.add(_weekdays[i]);
                           }
                         }
-                        debugPrint(
-                            'Creating habit: $newHabitName, selectedDays: $selectedDays, Conducted_by: $conductorName');
-                        if (newHabitName.isNotEmpty &&
+                        if (newEventName.isNotEmpty &&
                             selectedDays.isNotEmpty && conductorName.isNotEmpty) {
                           try {
-                            await context.read<HabitDatabase>().addHabit(
-                                newHabitName, selectedDays, conductorName);
+                            await context.read<EventDatabase>().addEvent(
+                                newEventName, selectedDays, conductorName);
                             Navigator.pop(context);
                             textController.clear();
                             textController2.clear();
-                            _showCustomToast('Habit added successfully!',
+                            _showCustomToast('Event added successfully!',
                                 Iconsax.tick_circle);
                           } catch (e) {
-                            debugPrint('Error adding habit: $e');
                             _showCustomToast(
-                                'Failed to add habit: $e', Iconsax.close_circle,
+                                'Failed to add event: $e', Iconsax.close_circle,
                                 durationInSeconds: 3);
                           }
                         } else {
                           _showCustomToast(
-                            'Please enter habit name and select day(s)',
+                            'Please enter event name and select day(s)',
                             Iconsax.warning_2,
                             durationInSeconds: 3,
                           );
@@ -288,28 +301,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void checkHabitOnOff(bool? value, Habit habit) {
+  void checkEventOnOff(bool? value, Event event) {
     if (value != null) {
-      context.read<HabitDatabase>().updateHabitCompletion(habit.id, value);
+      context.read<EventDatabase>().updateEventCompletion(event.id, value);
     }
   }
 
-  void markHabitNotConducted(Habit habit) {
-    context.read<HabitDatabase>().markHabitNotConducted(habit.id).then((_) {
-      _showCustomToast('Habit marked as not conducted', Iconsax.close_circle);
+  void markEventNotConducted(Event event) {
+    context.read<EventDatabase>().markEventNotConducted(event.id).then((_) {
+      _showCustomToast('Event marked as not conducted', Iconsax.close_circle);
     }).catchError((e) {
-      debugPrint('Error marking habit as not conducted: $e');
-      _showCustomToast('Failed to mark habit as not conducted: $e', Iconsax.warning_2,
+      _showCustomToast('Failed to mark event as not conducted: $e', Iconsax.warning_2,
           durationInSeconds: 3);
     });
   }
 
-  void editHabitBox(Habit habit) {
-    textController.text = habit.name;
-    textController2.text = habit.conductorName;
+  void editEventBox(Event event) {
+    textController.text = event.name;
+    textController2.text = event.conductorName;
     _selectedDays.fillRange(0, _selectedDays.length, false);
     for (int i = 0; i < _weekdays.length; i++) {
-      _selectedDays[i] = habit.assignedDays.contains(_weekdays[i]);
+      _selectedDays[i] = event.assignedDays.contains(_weekdays[i]);
     }
 
     showDialog(
@@ -374,7 +386,7 @@ class _HomePageState extends State<HomePage> {
                   actions: [
                     MaterialButton(
                       onPressed: () async {
-                        String newHabitName = textController.text.trim();
+                        String newEventName = textController.text.trim();
                         String conductorName = textController2.text.trim();
                         List<String> selectedDays = [];
                         for (int i = 0; i < _selectedDays.length; i++) {
@@ -382,27 +394,24 @@ class _HomePageState extends State<HomePage> {
                             selectedDays.add(_weekdays[i]);
                           }
                         }
-                        debugPrint(
-                            'Updating habit: $newHabitName, selectedDays: $selectedDays, Conducted_by: $conductorName');
-                        if (newHabitName.isNotEmpty &&
+                        if (newEventName.isNotEmpty &&
                             selectedDays.isNotEmpty && conductorName.isNotEmpty) {
                           try {
-                            await context.read<HabitDatabase>().updateHabit(
-                                habit.id, newHabitName, selectedDays, conductorName);
+                            await context.read<EventDatabase>().updateEvent(
+                                event.id, newEventName, selectedDays, conductorName);
                             Navigator.pop(context);
                             textController.clear();
                             textController2.clear();
-                            _showCustomToast('Habit updated successfully!',
+                            _showCustomToast('Event updated successfully!',
                                 Iconsax.tick_circle);
                           } catch (e) {
-                            debugPrint('Error updating habit: $e');
                             _showCustomToast(
-                                'Failed to update habit: $e', Iconsax.close_circle,
+                                'Failed to update event: $e', Iconsax.close_circle,
                                 durationInSeconds: 3);
                           }
                         } else {
                           _showCustomToast(
-                            'Please enter a habit name and select at least one day',
+                            'Please enter an event name and select at least one day',
                             Iconsax.warning_2,
                             durationInSeconds: 3,
                           );
@@ -424,23 +433,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void deleteHabitBox(Habit habit) {
+  void deleteEventBox(Event event) {
     showDialog(
       context: context,
       builder: (context) =>
           AlertDialog(
-            title: const Text('Delete Habit?'),
+            title: const Text('Delete Event?'),
             actions: [
               MaterialButton(
                 onPressed: () async {
                   try {
-                    await context.read<HabitDatabase>().deleteHabit(habit.id);
+                    await context.read<EventDatabase>().deleteEvent(event.id);
                     Navigator.pop(context);
                     _showCustomToast(
-                        'Habit deleted successfully!', Iconsax.tick_circle);
+                        'Event deleted successfully!', Iconsax.tick_circle);
                   } catch (e) {
-                    debugPrint('Error deleting habit: $e');
-                    _showCustomToast('Failed to delete habit: $e', Iconsax.close_circle,
+                    _showCustomToast('Failed to delete event: $e', Iconsax.close_circle,
                         durationInSeconds: 3);
                   }
                 },
@@ -469,37 +477,38 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme
-          .of(context)
-          .colorScheme
-          .surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         actions: [
           Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Row(
-                children: [
-                  CustomIconButton(
-                      icon: Icons.arrow_back,
-                      onPressed: _goToPreviousMonth,
-                      size: 24),
-                  const SizedBox(width: 8),
-                  CustomIconButton(
-                      icon: Icons.arrow_forward,
-                      onPressed: _goToNextMonth,
-                      size: 24),
-                  const SizedBox(width: 8),
-                  CustomIconButton(
-                      icon: Icons.settings_outlined,
-                      onPressed: (){
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => SettingsScreen()),
-                        );
-                      },
-                      size: 24),
-                ],
-              )
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                CustomIconButton(
+                  icon: Icons.arrow_back,
+                  onPressed: _goToPreviousMonth,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                CustomIconButton(
+                  icon: Icons.arrow_forward,
+                  onPressed: _goToNextMonth,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                CustomIconButton(
+                  icon: Icons.settings_outlined,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsScreen()),
+                    );
+                    _updateUserName();
+                  },
+                  size: 24,
+                ),
+              ],
+            ),
           ),
         ],
         title: Column(
@@ -507,46 +516,54 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               _getCurrentDate(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
-            Text(
-              _getDisplayedMonth(),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
-            ),
+            RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  letterSpacing: 1,
+                  color: Theme.of(context).colorScheme.inversePrimary
+                ),
+                children: [
+                  const TextSpan(text: "Today is "),
+                  TextSpan(
+                    text: DateFormat('EEEE').format(DateTime.now()),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold, // Example: make the day bold
+                      color: Color(0xFF56D364),           // Example: different color
+                    ),
+                  ),
+                ],
+              ),
+            )
+
           ],
         ),
         backgroundColor: Colors.transparent,
         centerTitle: false,
-        foregroundColor: Theme
-            .of(context)
-            .colorScheme
-            .inversePrimary,
+        foregroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton(
-        onPressed: createNewHabit,
+        onPressed: createNewEvent,
         elevation: 10,
-        backgroundColor: Theme
-            .of(context)
-            .colorScheme
-            .tertiary,
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
         child: Icon(
           Icons.add,
-          color: Theme
-              .of(context)
-              .colorScheme
-              .inversePrimary,
+          color: Theme.of(context).colorScheme.inversePrimary,
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: RefreshIndicator(
-        onRefresh: _loadHabits,
+        onRefresh: _loadEvents,
         child: ListView(
           children: [
             const SizedBox(height: 16),
             _buildHeatMap(),
             const SizedBox(height: 16),
-            _buildHabitList(),
+            _buildEventsList(),
             const SizedBox(height: 12),
           ],
         ),
@@ -555,22 +572,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeatMap() {
-    final habitDatabase = context.watch<HabitDatabase>();
-    List<Habit> currentHabits = habitDatabase.currentHabits;
+    final eventDatabase = context.watch<EventDatabase>();
+    List<Event> currentEvents = eventDatabase.currentEvents;
 
-    int totalHabits = currentHabits.length;
-    totalHabits = totalHabits > 0 ? totalHabits : 1;
+    int totalEvents = currentEvents.length;
+    totalEvents = totalEvents > 0 ? totalEvents : 1;
 
     return FutureBuilder(
-      future: habitDatabase.getFirstLaunchDate(),
+      future: eventDatabase.getFirstLaunchDate(),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           return Heatmap(
-            datasets: prepMapDataset(currentHabits),
+            datasets: prepMapDataset(currentEvents),
             startDate: snapshot.data!,
-            totalHabits: totalHabits,
+            totalEvents: totalEvents,
             currentDisplayedMonth: _currentDisplayedMonth,
-            currentHabits: currentHabits, // Pass the current habits
+            currentEvents: currentEvents, // Pass the GlobalKey
           );
         } else {
           return Container();
@@ -580,8 +597,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Add this helper method to calculate habits per day
-  Map<DateTime, int> calculateHabitsPerDay(List<Habit> habits, DateTime currentDisplayedMonth) {
-    Map<DateTime, int> habitsPerDay = {};
+  Map<DateTime, int> calculateEventsPerDay(List<Event> events, DateTime currentDisplayedMonth) {
+    Map<DateTime, int> eventsPerDay = {};
 
     // Calculate first day of displayed month
     final DateTime firstDayOfMonth = DateTime(currentDisplayedMonth.year, currentDisplayedMonth.month, 6);
@@ -594,24 +611,24 @@ class _HomePageState extends State<HomePage> {
       String dayOfWeek = DateFormat('EEEE').format(date); // e.g., "Monday"
 
       // Count habits assigned to this day
-      int habitsForDay = habits.where((habit) =>
-      habit.assignedDays != null && habit.assignedDays!.contains(dayOfWeek)
+      int eventsForDay = events.where((event) =>
+          event.assignedDays.contains(dayOfWeek)
       ).length;
 
       DateTime normalizedDate = DateTime(date.year, date.month, date.day);
-      habitsPerDay[normalizedDate] = habitsForDay;
+      eventsPerDay[normalizedDate] = eventsForDay;
     }
 
-    return habitsPerDay;
+    return eventsPerDay;
   }
 
-  Widget _buildHabitList() {
-    final habitDatabase = context.watch<HabitDatabase>();
-    List<Habit> currentHabits = habitDatabase.currentHabits;
+  Widget _buildEventsList() {
+    final eventDatabase = context.watch<EventDatabase>();
+    List<Event> currentEvents = eventDatabase.currentEvents;
     final today = DateFormat('EEEE').format(DateTime.now());
 
     return FutureBuilder<bool>(
-      future: habitDatabase.isHoliday(DateTime.now()),
+      future: eventDatabase.isHoliday(DateTime.now()),
       builder: (context, snapshot) {
         final isHoliday = snapshot.data ?? false;
 
@@ -634,10 +651,7 @@ class _HomePageState extends State<HomePage> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .onSurface,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -645,22 +659,14 @@ class _HomePageState extends State<HomePage> {
                     "Take a break from your events today",
                     style: TextStyle(
                       fontSize: 16,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   Text(
                     "Tap on the heatmap to toggle holidays",
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -669,10 +675,10 @@ class _HomePageState extends State<HomePage> {
           );
         }
 
-        List<Habit> todayHabits = currentHabits.where((habit) =>
-            habit.assignedDays.contains(today)).toList();
+        List<Event> todayEvents = currentEvents.where((event) =>
+            event.assignedDays.contains(today)).toList();
 
-        if (todayHabits.isEmpty) {
+        if (todayEvents.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 32.0),
             child: Center(
@@ -680,31 +686,19 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Iconsax.calendar_add_copy, size: 120, color: Theme.of(context).colorScheme.inverseSurface.withValues(alpha: 0.2)),
-                  /*SvgPicture.asset(
-                      'assets/icon/calendar-add-svgrepo-com.svg',
-                  height: 120,
-                  width: 120),*/
                   const SizedBox(height: 8),
                   Text(
                     "No Events for $today",
                     style: TextStyle(
                       fontSize: 18,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.7),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   Text(
                     "Create an event for $today to get started",
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -712,47 +706,33 @@ class _HomePageState extends State<HomePage> {
                     "Tap + button to add an Event.",
                     style: TextStyle(
                       fontSize: 14,
-                      color: Theme
-                          .of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
-                  Transform.rotate(
-                    angle: -45 * (math.pi / 180), // Convert degrees to radians
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 80.0),
-                      child: Lottie.asset(
-                        'assets/lottie/arrow-anim.json',
-                        repeat: false,
-                        height: 180,
-                      ),
-                    ),
-                  )
                 ],
               ),
             ),
           );
         }
 
+
         return ListView.builder(
-          itemCount: todayHabits.length,
+          itemCount: todayEvents.length,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemBuilder: (context, index) {
-            final habit = todayHabits[index];
-            bool isCompletedToday = isHabitCompletedToday(habit);
+            final event = todayEvents[index];
+            bool isCompletedToday = isEventCompletedToday(event);
 
-            return HabitTile(
+            return EventTile(
               isCompleted: isCompletedToday,
-              eventName: habit.name,
-              conductorName: habit.conductorName,
-              habit: habit, // Pass the Habit object
-              onChanged: (value) => checkHabitOnOff(value, habit),
-              editHabit: (context) => editHabitBox(habit),
-              deleteHabit: (context) => deleteHabitBox(habit),
-              markNotConducted: (context) => markHabitNotConducted(habit),
+              eventName: event.name,
+              conductorName: event.conductorName,
+              event: event,
+              onChanged: (value) => checkEventOnOff(value, event),
+              editEvent: (context) => editEventBox(event),
+              deleteEvent: (context) => deleteEventBox(event),
+              markNotConducted: (context) => markEventNotConducted(event),
             );
           },
         );

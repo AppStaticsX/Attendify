@@ -1,17 +1,17 @@
 import 'package:attendify/models/event.dart';
 import 'package:intl/intl.dart';
 
-bool isHabitCompletedToday(Habit habit) {
+bool isEventCompletedToday(Event event) {
   final today = DateTime.now();
   final todayWeekday = DateFormat('EEEE').format(today);
 
-  if (habit.completedDays == null || !habit.assignedDays.contains(todayWeekday)) {
+  if (event.completedDays == null || !event.assignedDays.contains(todayWeekday)) {
     return false;
   }
 
   // Check if today is marked as not conducted
-  if (habit.notConductedDays != null) {
-    bool isNotConducted = habit.notConductedDays!.any(
+  if (event.notConductedDays != null) {
+    bool isNotConducted = event.notConductedDays!.any(
           (day) =>
       day.date.year == today.year &&
           day.date.month == today.month &&
@@ -20,7 +20,7 @@ bool isHabitCompletedToday(Habit habit) {
     if (isNotConducted) return false;
   }
 
-  return habit.completedDays!.any(
+  return event.completedDays!.any(
         (completedDay) =>
     completedDay.date.year == today.year &&
         completedDay.date.month == today.month &&
@@ -28,19 +28,19 @@ bool isHabitCompletedToday(Habit habit) {
   );
 }
 
-bool isHabitNotConductedToday(Habit habit) {
+bool isEventNotConductedToday(Event event) {
   final today = DateTime.now();
   final todayWeekday = DateFormat('EEEE').format(today);
 
-  if (!habit.assignedDays.contains(todayWeekday)) {
+  if (!event.assignedDays.contains(todayWeekday)) {
     return false;
   }
 
-  if (habit.notConductedDays == null) {
+  if (event.notConductedDays == null) {
     return false;
   }
 
-  return habit.notConductedDays!.any(
+  return event.notConductedDays!.any(
         (day) =>
     day.date.year == today.year &&
         day.date.month == today.month &&
@@ -48,20 +48,20 @@ bool isHabitNotConductedToday(Habit habit) {
   );
 }
 
-Map<DateTime, int> prepMapDataset(List<Habit> habits) {
+Map<DateTime, int> prepMapDataset(List<Event> events) {
   Map<DateTime, int> dataset = {};
 
-  for (var habit in habits) {
-    if (habit.completedDays == null) continue;
+  for (var event in events) {
+    if (event.completedDays == null) continue;
 
-    for (var completedDay in habit.completedDays!) {
+    for (var completedDay in event.completedDays!) {
       final date = completedDay.date;
       final normalizedDate = DateTime(date.year, date.month, date.day);
       final weekday = DateFormat('EEEE').format(normalizedDate);
 
-      if (habit.assignedDays.contains(weekday)) {
+      if (event.assignedDays.contains(weekday)) {
         // Check if the day is not marked as not conducted
-        bool isNotConducted = habit.notConductedDays?.any((day) =>
+        bool isNotConducted = event.notConductedDays?.any((day) =>
         day.date.year == normalizedDate.year &&
             day.date.month == normalizedDate.month &&
             day.date.day == normalizedDate.day) ??

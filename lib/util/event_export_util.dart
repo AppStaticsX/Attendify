@@ -6,22 +6,22 @@ import 'package:share_plus/share_plus.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 
-class HabitExportUtil {
+class EventExportUtil {
   /// Converts a list of habits into CSV format
-  static String habitsToCSV(List<Habit> habits) {
+  static String eventsToCSV(List<Event> events) {
     List<List<dynamic>> csvData = [
-      ['Habit ID', 'Habit Name', 'Assigned Days', 'Completion Date']
+      ['Event_ID', 'Events_Name', 'Assigned_Days', 'Completion_Date']
     ];
 
-    for (var habit in habits) {
-      String assignedDaysStr = habit.assignedDays.join(';');
+    for (var event in events) {
+      String assignedDaysStr = event.assignedDays.join(';');
 
-      if (habit.completedDays == null || habit.completedDays!.isEmpty) {
-        csvData.add([habit.id, habit.name, assignedDaysStr, '']);
+      if (event.completedDays == null || event.completedDays!.isEmpty) {
+        csvData.add([event.id, event.name, assignedDaysStr, '']);
       } else {
-        for (var completedDay in habit.completedDays!) {
+        for (var completedDay in event.completedDays!) {
           String formattedDate = '${completedDay.date.year}-${completedDay.date.month.toString().padLeft(2, '0')}-${completedDay.date.day.toString().padLeft(2, '0')}';
-          csvData.add([habit.id, habit.name, assignedDaysStr, formattedDate]);
+          csvData.add([event.id, event.name, assignedDaysStr, formattedDate]);
         }
       }
     }
@@ -31,31 +31,30 @@ class HabitExportUtil {
   }
 
   /// Exports habits as CSV file and returns the file path
-  static Future<String> exportHabitsToFile(List<Habit> habits) async {
+  static Future<String> exportEventsToFile(List<Event> events) async {
     try {
-      String csvData = habitsToCSV(habits);
+      String csvData = eventsToCSV(events);
       final directory = await _getExportDirectory();
       String timestamp = DateTime.now().toString().replaceAll(' ', '_').replaceAll(':', '-').split('.').first;
-      String fileName = 'habitap_export_$timestamp.csv';
+      String fileName = 'attendify_export_$timestamp.csv';
       final file = File('${directory.path}/$fileName');
       await file.writeAsString(csvData);
       return file.path;
     } catch (e) {
-      debugPrint('Error exporting habits: $e');
       rethrow;
     }
   }
 
   /// Exports habits to a user-selected directory using file picker
-  static Future<String> exportHabitsToCustomDirectory(List<Habit> habits) async {
+  static Future<String> exportEventsToCustomDirectory(List<Event> events) async {
     try {
       // Convert habits to CSV
-      String csvData = habitsToCSV(habits);
+      String csvData = eventsToCSV(events);
 
       // Create a temporary file to hold the CSV data
       final tempDir = await getTemporaryDirectory();
       String timestamp = DateTime.now().toString().replaceAll(' ', '_').replaceAll(':', '-').split('.').first;
-      String fileName = 'habitap_export_$timestamp.csv';
+      String fileName = 'attendify_export_$timestamp.csv';
       final tempFile = File('${tempDir.path}/$fileName');
       await tempFile.writeAsString(csvData);
 
@@ -82,17 +81,19 @@ class HabitExportUtil {
   }
 
   /// Exports and shares the habits CSV file
-  static Future<void> exportAndShareHabits(List<Habit> habits) async {
+  static Future<void> exportAndShareEvents(List<Event> events) async {
     try {
-      String csvData = habitsToCSV(habits);
+      String csvData = eventsToCSV(events);
       final tempDir = await getTemporaryDirectory();
       String timestamp = DateTime.now().toString().replaceAll(' ', '_').replaceAll(':', '-').split('.').first;
-      String fileName = 'habitap_export_$timestamp.csv';
+      String fileName = 'attendify_export_$timestamp.csv';
       final file = File('${tempDir.path}/$fileName');
       await file.writeAsString(csvData);
-      await Share.shareXFiles([XFile(file.path)], text: 'HabitAp Data Export');
+      await SharePlus.instance.share(ShareParams(
+          files: [XFile(file.path)],
+          text: 'Attendify Data Export'
+      ));
     } catch (e) {
-      debugPrint('Error sharing habits: $e');
       rethrow;
     }
   }
@@ -123,7 +124,6 @@ class HabitExportUtil {
         }
         return directory;
       } catch (e) {
-        debugPrint('Error accessing external storage: $e');
         return await getApplicationDocumentsDirectory();
       }
     } else if (Platform.isIOS) {
@@ -134,7 +134,7 @@ class HabitExportUtil {
   }
 
   /// Import habits from CSV file
-  static Future<List<Map<String, dynamic>>> importHabitsFromCSV(String filePath) async {
+  static Future<List<Map<String, dynamic>>> importEventsFromCSV(String filePath) async {
     try {
       final file = File(filePath);
       final contents = await file.readAsString();
@@ -144,26 +144,26 @@ class HabitExportUtil {
         return [];
       }
 
-      List<Map<String, dynamic>> importedHabits = [];
-      Map<String, Map<String, dynamic>> habitsMap = {};
+      List<Map<String, dynamic>> importedEvents = [];
+      Map<String, Map<String, dynamic>> eventsMap = {};
 
       for (int i = 1; i < rowsAsListOfValues.length; i++) {
         var row = rowsAsListOfValues[i];
         if (row.length < 3) continue;
 
-        String habitId = row[0].toString();
-        String habitName = row[1].toString();
+        String eventId = row[0].toString();
+        String eventName = row[1].toString();
         String assignedDaysStr = row.length > 2 ? row[2].toString() : '';
         String completionDate = row.length > 3 ? row[3].toString() : '';
 
-        if (!habitsMap.containsKey(habitId)) {
+        if (!eventsMap.containsKey(eventId)) {
           List<String> assignedDays = assignedDaysStr.isNotEmpty
               ? assignedDaysStr.split(';').map((day) => day.trim()).toList()
               : <String>[];
 
-          habitsMap[habitId] = {
-            'id': int.tryParse(habitId) ?? DateTime.now().millisecondsSinceEpoch,
-            'name': habitName,
+          eventsMap[eventId] = {
+            'id': int.tryParse(eventId) ?? DateTime.now().millisecondsSinceEpoch,
+            'name': eventName,
             'assignedDays': assignedDays,
             'completedDays': <DateTime>[]
           };
@@ -172,17 +172,16 @@ class HabitExportUtil {
         if (completionDate.isNotEmpty) {
           try {
             DateTime date = DateTime.parse(completionDate);
-            (habitsMap[habitId]!['completedDays'] as List<DateTime>).add(date);
+            (eventsMap[eventId]!['completedDays'] as List<DateTime>).add(date);
           } catch (e) {
-            debugPrint('Error parsing date: $completionDate');
+            null;
           }
         }
       }
 
-      importedHabits = habitsMap.values.toList();
-      return importedHabits;
+      importedEvents = eventsMap.values.toList();
+      return importedEvents;
     } catch (e) {
-      debugPrint('Error importing habits: $e');
       rethrow;
     }
   }

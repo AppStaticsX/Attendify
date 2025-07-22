@@ -16,45 +16,121 @@ class AnalyticsPage extends StatefulWidget {
 }
 
 class _AnalyticsPageState extends State<AnalyticsPage> {
+
+  bool isSearchOpened = false;
+  TextEditingController searchController = TextEditingController();
+  List<Event> filteredEvents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    searchController.removeListener(_onSearchChanged);
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      // This will trigger a rebuild and filter the events
+    });
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      isSearchOpened = !isSearchOpened;
+      if (!isSearchOpened) {
+        searchController.clear();
+      }
+    });
+  }
+
+  List<Event> _filterEvents(List<Event> events) {
+    if (searchController.text.isEmpty) {
+      return events;
+    }
+
+    final query = searchController.text.toLowerCase();
+    return events.where((event) {
+      // Filter by event name
+      final nameMatch = event.name.toLowerCase().contains(query);
+      return nameMatch;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text(
+        title: isSearchOpened? TextField(
+          controller: searchController,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Search events...',
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 16,
+          ),
+          cursorColor: Theme.of(context).colorScheme.primary,
+        ) : const Text(
           'ANALYTICS',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(Iconsax.arrow_left_2_copy)
+        ),
+        actions: [
+          IconButton(
+            onPressed: _toggleSearch,
+            icon: Icon(
+              isSearchOpened ? Icons.close : Iconsax.search_normal_1_copy,
+            ),
+          )
+        ],
         backgroundColor: Colors.transparent,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
         centerTitle: true,
       ),
       body: FutureBuilder(
-          future: context.watch<HabitDatabase>().getFirstLaunchDate(),
+          future: context.watch<EventDatabase>().getFirstLaunchDate(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
 
             final startDate = snapshot.data!;
-            return _buildHabitsList(startDate);
-          }),
+            return _buildEventsList(startDate);
+          }
+      ),
     );
   }
 
-  Widget _buildHabitsList(DateTime startDate) {
-    final habitDatabase = context.watch<HabitDatabase>();
-    List<Habit> currentHabits = habitDatabase.currentHabits;
+  Widget _buildEventsList(DateTime startDate) {
+    final eventDatabase = context.watch<EventDatabase>();
+    List<Event> currentEvents = eventDatabase.currentEvents;
 
-    if (currentHabits.isEmpty) {
+    // Apply search filter
+    List<Event> displayEvents = _filterEvents(currentEvents);
+
+    if (currentEvents.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /*SvgPicture.asset(
-                'assets/icon/chart-21-svgrepo-com.svg',
-                height: 120,
-                width: 120),*/
             Icon(Iconsax.chart_21_copy, size: 120, color: Theme.of(context).colorScheme.inverseSurface.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             Text(
@@ -82,15 +158,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           ],
         ),
       );
-    } else if (currentHabits.isNotEmpty && DateTime.now().millisecondsSinceEpoch > startDate.millisecondsSinceEpoch) {
+    } else if (currentEvents.isNotEmpty && DateTime.now().millisecondsSinceEpoch < startDate.millisecondsSinceEpoch) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /*SvgPicture.asset(
-                'assets/icon/chart-21-svgrepo-com.svg',
-                height: 120,
-                width: 120),*/
             Icon(Iconsax.warning_2_copy, size: 120, color: Theme.of(context).colorScheme.inverseSurface.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             Text(
@@ -120,23 +192,54 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       );
     }
 
+    // Show "no results" message when search returns empty results
+    if (displayEvents.isEmpty && searchController.text.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Iconsax.search_normal_1_copy,
+              size: 120,
+              color: Theme.of(context).colorScheme.inverseSurface.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No events found',
+              style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+            Text(
+              'Try searching with different keywords',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: currentHabits.length,
+      itemCount: displayEvents.length,
       itemBuilder: (context, index) {
-        final habit = currentHabits[index];
-        return _buildHabitHeatmapCard(habit, startDate);
+        final event = displayEvents[index]; // Fixed: changed from 'habit' to 'event'
+        return _buildEventHeatmapCard(event, startDate);
       },
     );
   }
 
-  Widget _buildHabitHeatmapCard(Habit habit, DateTime startDate) {
-    Map<DateTime, int> habitData = {};
+  Widget _buildEventHeatmapCard(Event event, DateTime startDate) {
+    Map<DateTime, int> eventData = {};
 
-    if (habit.completedDays != null) {
-      for (var day in habit.completedDays!) {
+    if (event.completedDays != null) {
+      for (var day in event.completedDays!) {
         DateTime dateKey = DateTime(day.date.year, day.date.month, day.date.day);
-        habitData[dateKey] = 1;
+        eventData[dateKey] = 1;
       }
     }
 
@@ -167,7 +270,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        habit.name,
+                        event.name,
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -175,14 +278,14 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                         ),
                       ),
                       Text(
-                        'Completed ${habit.completedDays?.length ?? 0} times',
+                        'Completed ${event.completedDays?.length ?? 0} times',
                         style: TextStyle(
                           fontSize: 14,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       Text(
-                        'Assigned days: ${habit.assignedDays.join(", ")}',
+                        'Assigned days: ${event.assignedDays.join(", ")}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -194,22 +297,22 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               ],
             ),
             AnalyticsHeatmap(
-              datasets: habitData,
+              datasets: eventData,
               startDate: startDate,
-              totalHabits: 1,
+              totalEvents: 1,
             ),
             const SizedBox(height: 8),
             const SizedBox(height: 16),
-            _buildDayWiseCompletion(habit),
+            _buildDayWiseCompletion(event),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDayWiseCompletion(Habit habit) {
+  Widget _buildDayWiseCompletion(Event event) {
     return FutureBuilder<Map<String, Map<String, int>>>(
-      future: _calculateDayWiseCompletion(habit),
+      future: _calculateDayWiseCompletion(event),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -239,7 +342,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -271,7 +374,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                           const SizedBox(height: 4),
                           LinearProgressIndicator(
                             value: percentage / 100,
-                            backgroundColor: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                            backgroundColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               _getProgressColor(percentage),
                             ),
@@ -282,7 +385,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         );
       },
@@ -296,11 +399,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     return Colors.red;
   }
 
-  Future<Map<String, Map<String, int>>> _calculateDayWiseCompletion(Habit habit) async {
-    final habitDatabase = context.read<HabitDatabase>();
-    final holidays = await habitDatabase.getHolidays();
+  Future<Map<String, Map<String, int>>> _calculateDayWiseCompletion(Event event) async {
+    final eventDatabase = context.read<EventDatabase>();
+    final holidays = await eventDatabase.getHolidays();
     final holidaySet = holidays.map((date) => DateTime(date.year, date.month, date.day)).toSet();
-    final notConductedSet = (habit.notConductedDays ?? [])
+    final notConductedSet = (event.notConductedDays ?? [])
         .map((day) => DateTime(day.date.year, day.date.month, day.date.day))
         .toSet();
 
@@ -329,7 +432,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       final weekday = DateFormat('EEEE').format(iterDate);
 
       // Only count if this day is assigned to the habit AND it's not a holiday AND not marked as not conducted
-      if (habit.assignedDays.contains(weekday) &&
+      if (event.assignedDays.contains(weekday) &&
           !holidaySet.contains(normalizedIterDate) &&
           !notConductedSet.contains(normalizedIterDate)) {
         dayStats[weekday]!['total'] = dayStats[weekday]!['total']! + 1;
@@ -339,13 +442,13 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     }
 
     // Count completed days for each weekday
-    if (habit.completedDays != null) {
-      for (var completedDay in habit.completedDays!) {
+    if (event.completedDays != null) {
+      for (var completedDay in event.completedDays!) {
         final normalizedCompletedDate = DateTime(completedDay.date.year, completedDay.date.month, completedDay.date.day);
         final weekday = DateFormat('EEEE').format(completedDay.date);
 
         // Only count if this day is assigned to the habit, within our date range, and not a holiday
-        if (habit.assignedDays.contains(weekday) &&
+        if (event.assignedDays.contains(weekday) &&
             completedDay.date.isAfter(startDate.subtract(const Duration(days: 1))) &&
             completedDay.date.isBefore(currentDate.add(const Duration(days: 1))) &&
             !holidaySet.contains(normalizedCompletedDate) &&
@@ -358,182 +461,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     // Filter out days that are not assigned to this habit
     Map<String, Map<String, int>> filteredStats = {};
     for (var entry in dayStats.entries) {
-      if (habit.assignedDays.contains(entry.key)) {
+      if (event.assignedDays.contains(entry.key)) {
         filteredStats[entry.key] = entry.value;
       }
     }
 
     return filteredStats;
   }
-
-  /*Widget _buildStreakInfo(Habit habit) {
-    return FutureBuilder<int>(
-      future: _calculateCurrentStreak(habit),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        int currentStreak = snapshot.data!;
-        int longestStreak = _calculateLongestStreak(habit);
-
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildStreakCard(
-              'Current',
-              '$currentStreak days',
-              Icons.local_fire_department,
-              Colors.orange,
-            ),
-            _buildStreakCard(
-              'Longest',
-              '$longestStreak days',
-              Icons.emoji_events,
-              Colors.amber,
-            ),
-          ],
-        );
-      },
-    );
-  }*/
-
-  /*Widget _buildStreakCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      width: 120,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }*/
-
-  /*Future<int> _calculateCurrentStreak(Habit habit) async {
-    final habitDatabase = context.read<HabitDatabase>();
-    final holidays = await habitDatabase.getHolidays();
-    final holidaySet = holidays.map((date) => DateTime(date.year, date.month, date.day)).toSet();
-    final notConductedSet = (habit.notConductedDays ?? [])
-        .map((day) => DateTime(day.date.year, day.date.month, day.date.day))
-        .toSet();
-
-    if (habit.completedDays == null || habit.completedDays!.isEmpty || habit.assignedDays.isEmpty) {
-      return 0;
-    }
-
-    final completedDays = habit.completedDays!.toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-
-    final today = DateTime.now();
-    final todayWeekday = DateFormat('EEEE').format(today);
-    final normalizedToday = DateTime(today.year, today.month, today.day);
-
-    if (!habit.assignedDays.contains(todayWeekday) ||
-        holidaySet.contains(normalizedToday) ||
-        notConductedSet.contains(normalizedToday)) {
-      return 0;
-    }
-
-    bool hasToday = completedDays.any((day) =>
-    day.date.year == today.year &&
-        day.date.month == today.month &&
-        day.date.day == today.day);
-
-    int streak = hasToday ? 1 : 0;
-    DateTime currentDate = normalizedToday.subtract(const Duration(days: 1));
-
-    while (true) {
-      final normalizedCurrentDate = DateTime(currentDate.year, currentDate.month, currentDate.day);
-      final currentWeekday = DateFormat('EEEE').format(currentDate);
-
-      // Skip holidays and not conducted days
-      if (holidaySet.contains(normalizedCurrentDate) ||
-          notConductedSet.contains(normalizedCurrentDate)) {
-        currentDate = currentDate.subtract(const Duration(days: 1));
-        continue;
-      }
-
-      if (!habit.assignedDays.contains(currentWeekday)) {
-        currentDate = currentDate.subtract(const Duration(days: 1));
-        continue;
-      }
-
-      bool hasDate = completedDays.any((day) =>
-      day.date.year == currentDate.year &&
-          day.date.month == currentDate.month &&
-          day.date.day == currentDate.day);
-
-      if (!hasDate) break;
-
-      streak++;
-      currentDate = currentDate.subtract(const Duration(days: 1));
-    }
-
-    return streak;
-  }
-
-  int _calculateLongestStreak(Habit habit) {
-    if (habit.completedDays == null || habit.completedDays!.isEmpty || habit.assignedDays.isEmpty) {
-      return 0;
-    }
-
-    final completedDays = habit.completedDays!.toList()
-      ..sort((a, b) => a.date.compareTo(b.date));
-
-    int longestStreak = 1;
-    int currentStreak = 1;
-    DateTime? prevDate;
-
-    for (var day in completedDays) {
-      final currentWeekday = DateFormat('EEEE').format(day.date);
-      if (!habit.assignedDays.contains(currentWeekday)) {
-        continue;
-      }
-
-      if (prevDate == null) {
-        prevDate = day.date;
-        currentStreak = 1;
-        continue;
-      }
-
-      final difference = day.date.difference(prevDate).inDays;
-      if (difference == 7) {
-        currentStreak++;
-        longestStreak = currentStreak > longestStreak ? currentStreak : longestStreak;
-      } else {
-        currentStreak = 1;
-      }
-      prevDate = day.date;
-    }
-
-    return longestStreak;
-  }*/
 }

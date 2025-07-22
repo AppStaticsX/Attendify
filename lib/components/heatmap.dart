@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../database/event_database.dart';
+import '../src/data/heatmap_color_mode.dart';
+import '../src/heatmap.dart';
 
 class Heatmap extends StatefulWidget {
   final Map<DateTime, int> datasets;
   final DateTime startDate;
-  final int totalHabits;
+  final int totalEvents;
   final DateTime currentDisplayedMonth;
-  final List<dynamic> currentHabits;
+  final List<dynamic> currentEvents;// Add GlobalKey parameter
 
   const Heatmap({
     super.key,
     required this.datasets,
     required this.startDate,
-    required this.totalHabits,
+    required this.totalEvents,
     required this.currentDisplayedMonth,
-    required this.currentHabits,
+    required this.currentEvents// Optional GlobalKey
   });
 
   @override
@@ -33,28 +34,15 @@ class _HeatmapState extends State<Heatmap> {
   void initState() {
     super.initState();
     _loadHolidayDates();
-    _loadSelectedDate();
   }
 
   // Load holiday dates from database
   Future<void> _loadHolidayDates() async {
-    final habitDatabase = Provider.of<HabitDatabase>(context, listen: false);
-    final holidays = await habitDatabase.getHolidays();
+    final eventDatabase = Provider.of<EventDatabase>(context, listen: false);
+    final holidays = await eventDatabase.getHolidays();
     setState(() {
       holidayDates = holidays.map((date) => DateTime(date.year, date.month, date.day)).toSet();
     });
-  }
-
-  // Load the currently selected date from database (if you store it)
-  Future<void> _loadSelectedDate() async {
-    final habitDatabase = Provider.of<HabitDatabase>(context, listen: false);
-    // Assuming you have a method to get selected date from database
-    // final storedSelectedDate = await habitDatabase.getSelectedDate();
-    // if (storedSelectedDate != null) {
-    //   setState(() {
-    //     selectedDate = DateTime(storedSelectedDate.year, storedSelectedDate.month, storedSelectedDate.day);
-    //   });
-    // }
   }
 
   // Get modified datasets that include special highlighting for selected date and holidays
@@ -62,16 +50,16 @@ class _HeatmapState extends State<Heatmap> {
     Map<DateTime, int> modifiedDatasets = {};
 
     // Get habits per day for percentage calculations
-    Map<DateTime, int> habitsPerDay = _calculateHabitsPerDay();
+    Map<DateTime, int> eventsPerDay = _calculateEventsPerDay();
 
     // Convert completion counts to intensity levels (0-4)
     for (DateTime date in widget.datasets.keys) {
-      int completedHabits = widget.datasets[date]!;
-      int totalHabitsForDay = habitsPerDay[date] ?? 0;
+      int completedEvents = widget.datasets[date]!;
+      int totalEventsForDay = eventsPerDay[date] ?? 0;
 
       int intensityLevel;
-      if (totalHabitsForDay > 0) {
-        double percentage = completedHabits / totalHabitsForDay;
+      if (totalEventsForDay > 0) {
+        double percentage = completedEvents / totalEventsForDay;
         if (percentage == 0.0) {
           intensityLevel = 0; // No completion
         } else if (percentage <= 0.25) {
@@ -112,8 +100,8 @@ class _HeatmapState extends State<Heatmap> {
   }
 
   // Calculate habits per day based on assigned days
-  Map<DateTime, int> _calculateHabitsPerDay() {
-    Map<DateTime, int> habitsPerDay = {};
+  Map<DateTime, int> _calculateEventsPerDay() {
+    Map<DateTime, int> eventsPerDay = {};
 
     // Calculate first day of displayed month
     final DateTime firstDayOfMonth = DateTime(widget.currentDisplayedMonth.year, widget.currentDisplayedMonth.month, 6);
@@ -126,14 +114,14 @@ class _HeatmapState extends State<Heatmap> {
       String dayOfWeek = DateFormat('EEEE').format(date); // e.g., "Monday"
 
       // Count habits assigned to this day
-      int habitsForDay = widget.currentHabits.where((habit) =>
-      habit.assignedDays != null && habit.assignedDays!.contains(dayOfWeek)
+      int eventsForDay = widget.currentEvents.where((event) =>
+      event.assignedDays != null && event.assignedDays!.contains(dayOfWeek)
       ).length;
 
       DateTime normalizedDate = DateTime(date.year, date.month, date.day);
-      habitsPerDay[normalizedDate] = habitsForDay;
+      eventsPerDay[normalizedDate] = eventsForDay;
     }
-    return habitsPerDay;
+    return eventsPerDay;
   }
 
   // Generate static colorsets for intensity levels
@@ -156,15 +144,15 @@ class _HeatmapState extends State<Heatmap> {
   }
 
   void _onDateTapped(DateTime date) async {
-    final habitDatabase = Provider.of<HabitDatabase>(context, listen: false);
-    final isCurrentlyHoliday = await habitDatabase.isHoliday(date);
+    final eventDatabase = Provider.of<EventDatabase>(context, listen: false);
+    final isCurrentlyHoliday = await eventDatabase.isHoliday(date);
 
     if (isCurrentlyHoliday) {
-      await habitDatabase.removeHoliday(date);
+      await eventDatabase.removeHoliday(date);
       _showCustomSnackBar('Public-Holiday removed for ${DateFormat('MMM dd, yyyy').format(date)}');
       _getModifiedDatasets();
     } else {
-      await habitDatabase.addHoliday(date);
+      await eventDatabase.addHoliday(date);
       _showCustomSnackBar('🎉  Public-Holiday added for ${DateFormat('MMM dd, yyyy').format(date)}');
     }
 
@@ -196,10 +184,10 @@ class _HeatmapState extends State<Heatmap> {
     final DateTime displayedMonth = widget.currentDisplayedMonth;
 
     // Calculate first day of displayed month
-    final DateTime firstDayOfMonth = DateTime(displayedMonth.year, displayedMonth.month, displayedMonth.day - 7);
+    final DateTime firstDayOfMonth = DateTime(displayedMonth.year, displayedMonth.month, displayedMonth.day);
 
     // Calculate last day of displayed month
-    final DateTime lastDayOfMonth = DateTime(displayedMonth.year, displayedMonth.month + 2);
+    final DateTime lastDayOfMonth = DateTime(displayedMonth.year, displayedMonth.month, displayedMonth.day + 54);
 
     return Center(
       child: Padding(
@@ -212,82 +200,17 @@ class _HeatmapState extends State<Heatmap> {
               endDate: lastDayOfMonth,
               datasets: _getModifiedDatasets(),
               colorMode: ColorMode.color,
-              defaultColor: Theme.of(context).colorScheme.secondary,
-              textColor: Theme.of(context).colorScheme.inverseSurface,
               showText: true,
-              scrollable: true,
+              defaultColor: Theme.of(context).colorScheme.secondary,
               showColorTip: false,
               size: 30,
               colorsets: _generateDynamicColorsets(_getModifiedDatasets()),
               onClick: _onDateTapped,
             ),
             const SizedBox(height: 8),
-            //_buildHeatmapLegend(),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildHeatmapLegend() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: const Color(0xFF56D364).withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('Less'),
-            const SizedBox(width: 16),
-
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: const Color(0xFF56D364).withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('Normal'),
-            const SizedBox(width: 16),
-
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: const Color(0xFF56D364),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('More'),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: Colors.purple.shade500,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('Public-Holiday'),
-          ],
-        ),
-      ],
     );
   }
 }

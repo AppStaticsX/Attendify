@@ -1,3 +1,4 @@
+import 'package:attendify/components/name_picker_bottomsheet.dart';
 import 'package:flutter/material.dart';
 import 'package:attendify/authentication/add_pin_page.dart';
 import 'package:attendify/authentication/auth_page.dart';
@@ -8,9 +9,14 @@ import 'package:attendify/database/event_database.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,10 +28,16 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
         centerTitle: true,
+        leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(Iconsax.arrow_left_2_copy)
+        ),
       ),
       body: ListView(
-        children: const [
-          Padding(
+        children: [
+          const Padding(
             padding: EdgeInsets.only(left: 24.0, top: 24.0, bottom: 0.0),
             child: Text(
               'Account',
@@ -37,10 +49,10 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: AccountTile(),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.only(left: 24.0, top: 24.0, bottom: 0.0),
             child: Text(
               'Import, Export & Share Data',
@@ -51,19 +63,19 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: ExportCSVTile(),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: BackupToStorageTile(),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: ImportDataTile(),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.only(left: 24.0, top: 24.0, bottom: 0.0),
             child: Text(
               'Security',
@@ -74,11 +86,11 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: AuthTile(),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.only(left: 24.0, top: 24.0, bottom: 0.0),
             child: Text(
               'Schedule',
@@ -89,7 +101,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
+          const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: ScheduleTile(),
           ),
@@ -130,22 +142,26 @@ class AuthTile extends StatelessWidget {
                 final isAuthenticated = prefs.getBool(authKey) ?? false;
 
                 if (savedPIN != null && savedPIN.isNotEmpty && isAuthenticated) {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) {
-                        return AuthPage(
-                          onSuccess: () {
-                            Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (context) {
-                                  return AddPinPage();
-                                }));
-                          },
-                        );
-                      }));
+                  if (context.mounted) {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) {
+                          return AuthPage(
+                            onSuccess: () {
+                              Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(builder: (context) {
+                                    return AddPinPage();
+                                  }));
+                            },
+                          );
+                        }));
+                  }
                 } else {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) {
-                        return AddPinPage();
-                      }));
+                  if (context.mounted) {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) {
+                          return AddPinPage();
+                        }));
+                  }
                 }
               } catch (e) {
                 debugPrint(e.toString());
@@ -181,6 +197,7 @@ class ScheduleTile extends StatelessWidget {
         trailing: CustomIconButton(
             icon: Iconsax.arrow_right_2,
             onPressed: () {
+              CustomToast._showCustomToast(context, 'This feature is coming soon...', Iconsax.star);
             },
             size: 24),
       ),
@@ -188,38 +205,81 @@ class ScheduleTile extends StatelessWidget {
   }
 }
 
-class AccountTile extends StatelessWidget {
-  const AccountTile({super.key});
+class AccountTile extends StatefulWidget {
+  const AccountTile({
+    super.key,
+  });
+
+  @override
+  State<AccountTile> createState() => _AccountTileState();
+}
+
+class _AccountTileState extends State<AccountTile> {
+
+  String userName = 'Anonymous';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? username = prefs.getString('userNAME');
+
+    if (mounted) {
+      setState(() {
+        userName = username ?? 'Anonymous'; // Handle null case properly
+      });
+    }
+  }
+
+  void _updateUserName() {
+    // This method will be called when name is updated
+    _loadUserName();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondary,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.black,
-              child: Icon(
-                Iconsax.user_copy,
-                color: Colors.white,
+    return GestureDetector(
+      child: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.secondary,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.black,
+                child: Icon(
+                  Iconsax.user_copy,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            title: const Text(
-              'Anonymous',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
+              title: Text(
+                userName,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
+              onTap: () {
+                showModalBottomSheet(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return NamePickerBottomsheet(
+                        onNameUpdated: _updateUserName, // Pass the callback
+                      );
+                    }
+                );
+              },
             ),
-            onTap: () {},
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -247,20 +307,23 @@ class ExportCSVTile extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        onTap: () => _exportHabits(context),
+        onTap: () => _exportEvents(context),
       ),
     );
   }
 
-  void _exportHabits(BuildContext context) async {
+  void _exportEvents(BuildContext context) async {
     try {
       CustomToast._showCustomToast(context, 'Preparing export...', Iconsax.export_2);
-      final habitDatabase = Provider.of<HabitDatabase>(context, listen: false);
-      await habitDatabase.exportHabitsAsCSV();
-      CustomToast._showCustomToast(context, 'Habits exported successfully!', Iconsax.tick_circle);
+      final eventDatabase = Provider.of<EventDatabase>(context, listen: false);
+      await eventDatabase.exportEventsAsCSV();
+      if (context.mounted) {
+        CustomToast._showCustomToast(context, 'Events exported successfully!', Iconsax.tick_circle);
+      }
     } catch (e) {
-      debugPrint('Export error: $e');
-      CustomToast._showCustomToast(context, 'Export failed: ${e.toString().split('\n')[0]}', Iconsax.close_circle);
+      if (context.mounted) {
+        CustomToast._showCustomToast(context, 'Export failed: ${e.toString().split('\n')[0]}', Iconsax.close_circle);
+      }
     }
   }
 }
@@ -299,12 +362,15 @@ class BackupToStorageTile extends StatelessWidget {
   void _saveToStorage(BuildContext context) async {
     try {
       CustomToast._showCustomToast(context, 'Collecting Data...', Iconsax.data_copy);
-      final habitDatabase = Provider.of<HabitDatabase>(context, listen: false);
-      final filePath = await habitDatabase.exportHabitsToCustomDirectory();
-      CustomToast._showCustomToast(context, 'Backup saved to: $filePath', Iconsax.tick_circle);
+      final eventDatabase = Provider.of<EventDatabase>(context, listen: false);
+      final filePath = await eventDatabase.exportEventsToCustomDirectory();
+      if (context.mounted) {
+        CustomToast._showCustomToast(context, 'Backup saved to: $filePath', Iconsax.tick_circle);
+      }
     } catch (e) {
-      debugPrint('Backup error: $e');
-      CustomToast._showCustomToast(context, 'Backup failed: ${e.toString().split('\n')[0]}', Iconsax.close_circle);
+      if (context.mounted) {
+        CustomToast._showCustomToast(context, 'Backup failed: ${e.toString().split('\n')[0]}', Iconsax.close_circle);
+      }
     }
   }
 }
@@ -331,12 +397,12 @@ class ImportDataTile extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        onTap: () => _importHabits(context),
+        onTap: () => _importEvents(context),
       ),
     );
   }
 
-  void _importHabits(BuildContext context) async {
+  void _importEvents(BuildContext context) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -344,15 +410,25 @@ class ImportDataTile extends StatelessWidget {
       );
 
       if (result != null && result.files.single.path != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Importing habits...')));
-        final habitDatabase = Provider.of<HabitDatabase>(context, listen: false);
-        await habitDatabase.importHabitsFromCSV(result.files.single.path!);
-        CustomToast._showCustomToast(context, 'Habits imported successfully!', Iconsax.tick_circle);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Importing events...')));
+        }
+        if (context.mounted) {
+          final eventDatabase = Provider.of<EventDatabase>(context, listen: false);
+          await eventDatabase.importEventsFromCSV(result.files.single.path!);
+        }
+
+        if (context.mounted) {
+          CustomToast._showCustomToast(context, 'Events imported successfully!', Iconsax.tick_circle);
+        }
+
       }
     } catch (e) {
-      debugPrint('Import error: $e');
-      CustomToast._showCustomToast(context, 'Import failed: ${e.toString().split('\n')[0]}', Iconsax.close_circle);
+      if (context.mounted) {
+        CustomToast._showCustomToast(context, 'Import failed: ${e.toString().split('\n')[0]}', Iconsax.close_circle);
+      }
+
     }
   }
 }

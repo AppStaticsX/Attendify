@@ -22,7 +22,7 @@ class Event extends HiveObject {
   @HiveField(5)
   HiveList<CompletedDay>? notConductedDays; // List of days when habit was not conducted
 
-  Habit() {
+  Event() {
     // Ensure assignedDays is always initialized to an empty list
     assignedDays = assignedDays ?? [];
     // Do not initialize notConductedDays here; it will be set in HabitDatabase

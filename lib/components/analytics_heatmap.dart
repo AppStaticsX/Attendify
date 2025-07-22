@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_heatmap_calendar/flutter_heatmap_calendar.dart';
+
+import '../src/data/heatmap_color_mode.dart';
+import '../src/heatmap_calendar.dart';
 
 class AnalyticsHeatmap extends StatelessWidget {
   final Map<DateTime, int> datasets;

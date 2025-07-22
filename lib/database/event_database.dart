@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:attendify/models/app_settings.dart';
 import 'package:attendify/models/event.dart';
-import 'package:attendify/util/habit_export_util.dart';
+import 'package:attendify/util/event_export_util.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class EventDatabase extends ChangeNotifier {
@@ -226,120 +226,114 @@ class EventDatabase extends ChangeNotifier {
     await readEvents();
   }
 
-  Future<void> deleteHabit(int id) async {
-    final habitIndex = _findHabitIndexById(id);
+  Future<void> deleteEvent(int id) async {
+    final eventIndex = _findEventIndexById(id);
 
-    if (habitIndex != -1) {
-      final habit = _habitsBox.getAt(habitIndex);
+    if (eventIndex != -1) {
+      final event = _eventBox.getAt(eventIndex);
 
-      if (habit != null) {
-        final boxName = 'completedDays_${habit.id}';
-        Box<CompletedDay>? completedDaysBox = _completedDaysBoxes[habit.id];
+      if (event != null) {
+        final boxName = 'completedDays_${event.id}';
+        Box<CompletedDay>? completedDaysBox = _completedDaysBoxes[event.id];
 
         if (completedDaysBox == null || !completedDaysBox.isOpen) {
           try {
             completedDaysBox = await Hive.openBox<CompletedDay>(boxName);
-            _completedDaysBoxes[habit.id] = completedDaysBox;
+            _completedDaysBoxes[event.id] = completedDaysBox;
           } catch (e) {
-            debugPrint('Error opening completedDays box: $e');
+            null;
           }
         }
 
-        if (habit.completedDays != null && habit.completedDays!.isNotEmpty) {
-          for (var day in habit.completedDays!) {
+        if (event.completedDays != null && event.completedDays!.isNotEmpty) {
+          for (var day in event.completedDays!) {
             await day.delete();
           }
         }
 
-        if (habit.notConductedDays != null && habit.notConductedDays!.isNotEmpty) {
-          for (var day in habit.notConductedDays!) {
+        if (event.notConductedDays != null && event.notConductedDays!.isNotEmpty) {
+          for (var day in event.notConductedDays!) {
             await day.delete();
           }
         }
 
         if (completedDaysBox != null && completedDaysBox.isOpen) {
           await completedDaysBox.close();
-          _completedDaysBoxes.remove(habit.id);
+          _completedDaysBoxes.remove(event.id);
         }
 
         await Hive.deleteBoxFromDisk(boxName);
-        await _habitsBox.deleteAt(habitIndex);
-        debugPrint('Deleted habit: ${habit.name}');
+        await _eventBox.deleteAt(eventIndex);
       }
     }
 
-    await readHabits();
+    await readEvents();
   }
 
-  int _findHabitIndexById(int id) {
-    for (int i = 0; i < _habitsBox.length; i++) {
-      final habit = _habitsBox.getAt(i);
-      if (habit != null && habit.id == id) {
+  int _findEventIndexById(int id) {
+    for (int i = 0; i < _eventBox.length; i++) {
+      final event = _eventBox.getAt(i);
+      if (event != null && event.id == id) {
         return i;
       }
     }
     return -1;
   }
 
-  Future<void> exportHabitsAsCSV() async {
+  Future<void> exportEventsAsCSV() async {
     try {
-      await HabitExportUtil.exportAndShareHabits(currentHabits);
+      await EventExportUtil.exportAndShareEvents(currentEvents);
     } catch (e) {
-      debugPrint('Error exporting habits: $e');
       rethrow;
     }
   }
 
-  Future<String> exportHabitsToFile() async {
+  Future<String> exportEventsToFile() async {
     try {
-      return await HabitExportUtil.exportHabitsToFile(currentHabits);
+      return await EventExportUtil.exportEventsToFile(currentEvents);
     } catch (e) {
-      debugPrint('Error exporting habits to file: $e');
       rethrow;
     }
   }
 
-  Future<String> exportHabitsToCustomDirectory() async {
+  Future<String> exportEventsToCustomDirectory() async {
     try {
-      return await HabitExportUtil.exportHabitsToCustomDirectory(currentHabits);
+      return await EventExportUtil.exportEventsToCustomDirectory(currentEvents);
     } catch (e) {
-      debugPrint('Error exporting habits to custom directory: $e');
       rethrow;
     }
   }
 
-  Future<void> importHabitsFromCSV(String filePath) async {
+  Future<void> importEventsFromCSV(String filePath) async {
     try {
-      List<Map<String, dynamic>> importedHabits = await HabitExportUtil.importHabitsFromCSV(filePath);
+      List<Map<String, dynamic>> importedEvents = await EventExportUtil.importEventsFromCSV(filePath);
 
-      for (var habitData in importedHabits) {
-        final habit = Habit()
-          ..name = habitData['name']
-          ..id = habitData['id']
-          ..conductorName = habitData['conductedby']
-          ..assignedDays = List<String>.from(habitData['assignedDays'] ?? []);
+      for (var eventData in importedEvents) {
+        final event = Event()
+          ..name = eventData['name']
+          ..id = eventData['id']
+          ..conductorName = eventData['conductedby']
+          ..assignedDays = List<String>.from(eventData['assignedDays'] ?? []);
 
-        await _habitsBox.add(habit);
-        final completedDaysBox = await _openCompletedDaysBox(habit.id);
+        await _eventBox.add(event);
+        final completedDaysBox = await _openCompletedDaysBox(event.id);
 
-        habit.completedDays = HiveList(completedDaysBox);
-        habit.notConductedDays = HiveList(completedDaysBox);
-        await habit.save();
+        event.completedDays = HiveList(completedDaysBox);
+        event.notConductedDays = HiveList(completedDaysBox);
+        await event.save();
 
-        List<DateTime> completedDays = habitData['completedDays'];
+        List<DateTime> completedDays = eventData['completedDays'];
         for (var date in completedDays) {
           final completedDay = CompletedDay(date: date);
           await completedDaysBox.add(completedDay);
-          habit.completedDays!.add(completedDay);
+          event.completedDays!.add(completedDay);
         }
 
-        await habit.save();
-        debugPrint('Imported habit: ${habit.name}, assignedDays: ${habit.assignedDays}');
+        await event.save();
       }
 
-      await readHabits();
+      await readEvents();
     } catch (e) {
-      debugPrint('Error importing habits: $e');
       rethrow;
     }
   }
@@ -349,7 +343,7 @@ class EventDatabase extends ChangeNotifier {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final holidayKey = '${normalizedDate.year}-${normalizedDate.month}-${normalizedDate.day}';
 
-    if (!_settingsBox.isEmpty) {
+    if (_settingsBox.isNotEmpty) {
       final settings = _settingsBox.getAt(0)!;
       settings.holidays ??= <String>[];
       if (!settings.holidays!.contains(holidayKey)) {
@@ -364,7 +358,7 @@ class EventDatabase extends ChangeNotifier {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final holidayKey = '${normalizedDate.year}-${normalizedDate.month}-${normalizedDate.day}';
 
-    if (!_settingsBox.isEmpty) {
+    if (_settingsBox.isNotEmpty) {
       final settings = _settingsBox.getAt(0)!;
       settings.holidays?.remove(holidayKey);
       await settings.save();
@@ -376,7 +370,7 @@ class EventDatabase extends ChangeNotifier {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final holidayKey = '${normalizedDate.year}-${normalizedDate.month}-${normalizedDate.day}';
 
-    if (!_settingsBox.isEmpty) {
+    if (_settingsBox.isNotEmpty) {
       final settings = _settingsBox.getAt(0)!;
       return settings.holidays?.contains(holidayKey) ?? false;
     }
@@ -384,7 +378,7 @@ class EventDatabase extends ChangeNotifier {
   }
 
   Future<List<DateTime>> getHolidays() async {
-    if (!_settingsBox.isEmpty) {
+    if (_settingsBox.isNotEmpty) {
       final settings = _settingsBox.getAt(0)!;
       return (settings.holidays ?? <String>[]).map((holidayKey) {
         final parts = holidayKey.split('-');
