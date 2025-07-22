@@ -311,7 +311,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
   Widget _buildDayWiseCompletion(Event event) {
-    bool isPercentageError = false;
 
     return FutureBuilder<Map<String, Map<String, int>>>(
       future: _calculateDayWiseCompletion(event),
@@ -382,7 +381,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                           ),
                           const SizedBox(height: 4),
                           LinearProgressIndicator(
-                            value: percentage / 100,
+                            value: percentage == double.infinity? 0 : percentage / 100,
                             backgroundColor: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               _getProgressColor(percentage),
