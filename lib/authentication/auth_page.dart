@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:attendify/pages/home_page.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:pinput/pinput.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -201,11 +200,7 @@ class _AuthPageState extends State<AuthPage> {
       );
 
       if (authenticate) {
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) {
-              return HomePage();
-            })
-        );
+        widget.onSuccess();
       }
     } catch (e) {
       debugPrint(e.toString());
