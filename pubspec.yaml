@@ -55,6 +55,7 @@ flutter:
   assets:
     - assets/lottie/
     - assets/icon/
+    - assets/audio/
 
   fonts:
     - family: JetBrains Mono
