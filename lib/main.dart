@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:attendify/authentication/local_auth_page.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:attendify/components/alarm_overlay.dart'; // Import your new page
+import 'package:attendify/components/alarm_overlay.dart';
 import 'package:attendify/database/event_database.dart';
 import 'package:attendify/pages/welcome_page.dart';
 import 'package:attendify/pages/home_page.dart';
@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'models/remainder.dart';
 
 final NotificationService _notificationService = NotificationService();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // Add this global variable
 NotificationAppLaunchDetails? notificationAppLaunchDetails;
@@ -30,9 +31,22 @@ void main() async {
   // Open the Reminder box (assuming EventDatabase handles the Event box)
   await Hive.openBox<Reminder>('reminders');
 
-  // Initialize the Notification Service
+  // Initialize the Notification Service with callback
   try {
-    await _notificationService.init(); // SUSPECT LINE
+    await _notificationService.init(
+      onNotificationReceived: (reminderId, scheduledTime, description) {
+        // Navigate to AlarmOverlayPage when notification is received
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => AlarmOverlayPage(
+              reminderId: reminderId,
+              scheduledTime: scheduledTime,
+              description: description,
+            ),
+          ),
+        );
+      },
+    );
 
     // Get notification launch details BEFORE runApp()
     notificationAppLaunchDetails = await _notificationService
@@ -71,6 +85,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey, // Add the global navigator key
       home: const AppInitializer(),
       theme: Provider.of<ThemeProvider>(context).themeData,
     );
@@ -212,9 +227,9 @@ class _AppInitializerState extends State<AppInitializer> {
             Text(
               'Initializing Data...',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 16,
-                fontWeight: FontWeight.bold
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold
               ),
             ),
           ],

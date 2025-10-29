@@ -6,6 +6,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 import '../models/remainder.dart';
 
+// Callback for when notification is received in foreground
+typedef OnNotificationReceived = void Function(int reminderId, DateTime scheduledTime, String description);
+
 // Background task callback - MUST be a top-level function
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -48,8 +51,14 @@ class NotificationService {
   static const String PERIODIC_TASK_TAG = "reminder_check_task";
   static const String UNIQUE_TASK_NAME = "reminder_periodic_check";
 
+  // Callback for foreground notifications
+  OnNotificationReceived? onNotificationReceived;
+
   // --- 1. INITIALIZATION ---
-  Future<void> init() async {
+  Future<void> init({OnNotificationReceived? onNotificationReceived}) async {
+    // Store the callback
+    this.onNotificationReceived = onNotificationReceived;
+
     // 1. Initialize Timezones
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Colombo'));
@@ -75,6 +84,8 @@ class NotificationService {
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         await _handleNotificationTap(response);
       },
+      // THIS IS THE KEY: Handle foreground notifications
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
 
     // 3. Request permissions
@@ -90,10 +101,9 @@ class NotificationService {
       try {
         await Workmanager().initialize(
           callbackDispatcher,
-          isInDebugMode: false, // Set to true for debugging
+          isInDebugMode: false,
         );
 
-        // Register periodic task to check reminders every 15 minutes
         await Workmanager().registerPeriodicTask(
           UNIQUE_TASK_NAME,
           PERIODIC_TASK_TAG,
@@ -116,8 +126,6 @@ class NotificationService {
         print('Error initializing WorkManager: $e');
       }
     } else if (Platform.isIOS) {
-      // iOS background fetch is handled differently
-      // You'll need to configure BGTaskScheduler in AppDelegate.swift
       print('iOS background fetch should be configured in native code');
     }
   }
@@ -135,11 +143,19 @@ class NotificationService {
     if (response.payload != null) {
       final int reminderId = int.parse(response.payload!);
 
-      // Mark reminder as completed
+      // Fetch reminder details from Hive
       final Box<Reminder> reminderBox = Hive.box<Reminder>('reminders');
       final reminder = reminderBox.get(reminderId);
 
-      if (reminder != null) {
+      if (reminder != null && onNotificationReceived != null) {
+        // Call the callback to show AlarmOverlayPage
+        onNotificationReceived!(
+          reminder.id,
+          reminder.scheduledTime,
+          reminder.description,
+        );
+
+        // Mark reminder as completed
         reminder.isCompleted = true;
         await reminder.save();
         print('Reminder marked as completed: $reminderId');
@@ -227,9 +243,9 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
       ongoing: false,
       autoCancel: true,
-      // Wake screen for important reminders
       fullScreenIntent: true,
-      category: AndroidNotificationCategory.reminder,
+      sound: RawResourceAndroidNotificationSound('morning'),
+      category: AndroidNotificationCategory.alarm,
     );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
@@ -365,4 +381,12 @@ class NotificationService {
     }
     return [];
   }
+}
+
+// Background notification handler
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse notificationResponse) async {
+  print('notification(${notificationResponse.id}) action tapped: '
+      '${notificationResponse.actionId} with'
+      ' payload: ${notificationResponse.payload}');
 }

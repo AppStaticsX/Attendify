@@ -593,10 +593,10 @@ class _AddReminderScreenState extends State<AddReminderScreen>
                 : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Iconsax.alarm_copy, size: 22),
+                const Icon(Iconsax.timer_start_copy, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  'SET ${_reminderSlots.length} REMINDER${_reminderSlots.length > 1 ? 'S' : ''}',
+                  'SET REMINDER',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

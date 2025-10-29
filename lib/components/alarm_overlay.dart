@@ -171,7 +171,7 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
                   Text(
                     '${widget.scheduledTime.hour.toString().padLeft(2, '0')}:${widget.scheduledTime.minute.toString().padLeft(2, '0')} ${widget.scheduledTime.hour >= 12 ? 'PM' : 'AM'}',
                     style: TextStyle(
-                      fontSize: 36,
+                      fontSize: 44,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                       shadows: const [
