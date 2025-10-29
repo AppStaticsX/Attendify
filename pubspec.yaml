@@ -1,0 +1,69 @@
+name: attendify
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_slidable: ^4.0.0
+  intl: ^0.20.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  hive_generator_plus: ^5.0.0
+  provider: ^6.1.5
+  flutter_svg: ^2.1.0
+  shared_preferences: ^2.5.3
+  flame_lottie: ^0.4.2+17
+  flutter_launcher_icons: ^0.14.3
+  csv: ^6.0.0
+  path_provider: ^2.1.5
+  share_plus: ^12.0.1
+  file_picker: ^10.3.3
+  device_info_plus: ^12.2.0
+  local_auth: ^3.0.0
+  pinput: ^5.0.1
+  table_calendar: ^3.2.0
+  iconsax_flutter: ^1.0.1
+  fl_chart: ^1.1.1
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.0
+  url_launcher: ^6.3.1
+  permission_handler: ^12.0.1
+  workmanager: ^0.9.0+3
+  flutter_native_splash: ^2.4.7
+  easy_date_timeline: ^2.0.9
+  build: 3.1.0
+  build_runner: ^2.7.1
+  analyzer: ^8.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/lottie/
+    - assets/icon/
+
+  fonts:
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/font/JetBrains/JetBrainsMono-ExtraBold.ttf
+
+flutter_native_splash:
+  color: "#1A1A1A"
+  image: assets/icon/splash_icon.png  # 1152x1152 px PNG
+
+  android_12:
+    image: assets/icon/splash_icon.png  # Same 1152x1152 px
+    icon_background_color: "#1A1A1A"
