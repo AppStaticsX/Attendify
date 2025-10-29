@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import '../models/remainder.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../services/notification_service.dart';
 
 class AddReminderScreen extends StatefulWidget {
@@ -21,8 +22,13 @@ class _AddReminderScreenState extends State<AddReminderScreen>
   final Box<Reminder> _reminderBox = Hive.box<Reminder>('reminders');
   final _formKey = GlobalKey<FormState>();
 
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   // List to hold multiple reminder times
   final List<ReminderTimeSlot> _reminderSlots = [];
+
+  final List<String> _ringtoneList = ['Breeze', 'Daydream', 'Fireflies', 'Morning', 'Sunrise', 'Dewdrops'];
+  String _selectedRingtone = 'Breeze';
 
   bool _isLoading = false;
   bool _titleFocused = false;
@@ -664,6 +670,15 @@ class _AddReminderScreenState extends State<AddReminderScreen>
                     ),
                   ],
                 ),
+                IconButton(
+                    onPressed: (){
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) => _buildSettingBottomSheet()
+                      );
+                    },
+                    icon: Icon(Iconsax.setting)
+                ),
                 if (_reminderSlots.length > 1)
                   IconButton(
                     icon: Icon(Iconsax.trash_copy,
@@ -682,8 +697,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
                   ),
               ],
             ),
-            const SizedBox(height: 16),
-
+            const SizedBox(height: 8),
             // Easy Date Timeline
             EasyDateTimeLine(
               initialDate: slot.date,
@@ -945,6 +959,125 @@ class _AddReminderScreenState extends State<AddReminderScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingBottomSheet() {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'REMINDER SETTINGS',
+                  style: TextStyle(
+                    fontSize: 24
+                  ),
+                ),
+                IconButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    icon: Icon(Iconsax.close_circle_copy, size: 32)
+                )
+              ],
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Reminder Ringtone',
+              style: TextStyle(
+                  fontSize: 16
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                SizedBox(
+                  width: (MediaQuery.of(context).size.width - 140),
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _selectedRingtone,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(
+                        Iconsax.music,
+                        color: Theme.of(context).colorScheme.inversePrimary.withValues(alpha: 0.7),
+                      ),
+                      border: InputBorder.none,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.secondary,
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.secondary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.secondary,
+                          width: 1.5,
+                        ),
+                      ),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.secondary,
+                          width: 1.5,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.secondary,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: 18.0, horizontal: 20.0),
+                    ),
+                    items: _ringtoneList.map((String ringtone) {
+                      return DropdownMenuItem<String>(
+                        value: ringtone,
+                        child: Text(ringtone, style: TextStyle(fontFamily: 'JetBrains Mono')),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        _selectedRingtone = value!;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    borderRadius: BorderRadius.circular(12)
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(5.5),
+                    child: IconButton(
+                        onPressed: () async {
+                          await _audioPlayer.stop();
+                          String fileName = _selectedRingtone.toLowerCase();
+                          await _audioPlayer.play(AssetSource(fileName));
+                        },
+                        icon: Icon(Iconsax.music_play)
+                    ),
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

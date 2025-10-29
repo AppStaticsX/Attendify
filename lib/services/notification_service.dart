@@ -244,6 +244,7 @@ class NotificationService {
       ongoing: false,
       autoCancel: true,
       fullScreenIntent: true,
+      audioAttributesUsage: AudioAttributesUsage.alarm,
       sound: RawResourceAndroidNotificationSound('morning'),
       category: AndroidNotificationCategory.alarm,
     );
