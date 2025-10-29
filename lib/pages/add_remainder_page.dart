@@ -164,6 +164,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
         description: _descriptionController.text.trim().isEmpty
             ? 'You set this reminder for now. Tap to mark as complete.'
             : _descriptionController.text.trim(),
+        ringtone: _selectedRingtone.toLowerCase()
       );
 
       // Save to Hive

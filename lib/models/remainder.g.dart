@@ -22,6 +22,7 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       scheduledTime: fields[2] as DateTime,
       isCompleted: fields[3] as bool,
       description: fields[4] as String,
+      ringtone: fields[5] as String
     );
   }
 

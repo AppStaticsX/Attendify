@@ -22,12 +22,16 @@ class Reminder extends HiveObject {
   @HiveField(4)
   final String description;
 
+  @HiveField(5)
+  final String ringtone;
+
   Reminder({
     required this.id,
     required this.title,
     required this.scheduledTime,
     this.isCompleted = false,
-    required this.description
+    required this.description,
+    required this.ringtone
   });
 
   // Helper method to create a unique ID for the notification and database key
