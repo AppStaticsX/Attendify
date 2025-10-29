@@ -984,119 +984,110 @@ class _AddReminderScreenState extends State<AddReminderScreen>
   }
 
   Widget _buildSettingBottomSheet() {
-    return SafeArea(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'REMINDER SETTINGS',
-                    style: TextStyle(
-                      fontSize: 24
+    return StatefulBuilder(
+        builder: (context, setModalState) {
+          return SafeArea(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'REMINDER SETTINGS',
+                          style: TextStyle(
+                              fontSize: 24
+                          ),
+                        ),
+                        IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Iconsax.close_circle_copy, size: 32)
+                        )
+                      ],
                     ),
-                  ),
-                  IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: Icon(Iconsax.close_circle_copy, size: 32)
-                  )
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Reminder Ringtone',
-                style: TextStyle(
-                    fontSize: 16
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Reminder Ringtone',
+                      style: TextStyle(
+                          fontSize: 16
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: (MediaQuery.of(context).size.width - 140),
+                          child: DropdownButtonFormField<String>(
+                            initialValue: _selectedRingtone,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(
+                                Iconsax.music,
+                                color: Theme.of(context).colorScheme.inversePrimary.withValues(alpha: 0.7),
+                              ),
+                              border: InputBorder.none,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.secondary,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 18.0, horizontal: 20.0),
+                            ),
+                            items: _ringtoneList.map((String ringtone) {
+                              return DropdownMenuItem<String>(
+                                value: ringtone,
+                                child: Text(ringtone, style: const TextStyle(fontFamily: 'JetBrains Mono')),
+                              );
+                            }).toList(),
+                            onChanged: _isPlaying ? null : (String? value) {
+                              setModalState(() {
+                                _selectedRingtone = value!;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
+                              borderRadius: BorderRadius.circular(12)
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(6),
+                            child: IconButton(
+                                onPressed: () async {
+                                  await _togglePlayPause();
+                                  setModalState(() {});
+                                },
+                                icon: Icon(_isPlaying? Iconsax.pause_circle : Iconsax.play_circle, size: 32,)
+                            ),
+                          ),
+                        )
+                      ],
+                    )
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 140),
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedRingtone,
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(
-                          Iconsax.music,
-                          color: Theme.of(context).colorScheme.inversePrimary.withValues(alpha: 0.7),
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.secondary,
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.secondary,
-                            width: 1.5,
-                          ),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.secondary,
-                            width: 1.5,
-                          ),
-                        ),
-                        disabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.secondary,
-                            width: 1.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.secondary,
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 18.0, horizontal: 20.0),
-                      ),
-                      items: _ringtoneList.map((String ringtone) {
-                        return DropdownMenuItem<String>(
-                          value: ringtone,
-                          child: Text(ringtone, style: TextStyle(fontFamily: 'JetBrains Mono')),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedRingtone = value!;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.secondary,
-                      borderRadius: BorderRadius.circular(12)
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(5.5),
-                      child: IconButton(
-                          onPressed: _togglePlayPause,
-                          icon: Icon(_isPlaying? Iconsax.pause : Iconsax.play)
-                      ),
-                    ),
-                  )
-                ],
-              )
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        }
     );
   }
 
@@ -1155,6 +1146,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
     _titleController.dispose();
     _descriptionController.dispose();
     _animationController.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 }
