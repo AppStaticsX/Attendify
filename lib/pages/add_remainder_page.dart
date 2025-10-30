@@ -27,8 +27,9 @@ class _AddReminderScreenState extends State<AddReminderScreen>
   // List to hold multiple reminder times
   final List<ReminderTimeSlot> _reminderSlots = [];
 
-  final List<String> _ringtoneList = ['Breeze', 'Daydream', 'Fireflies', 'Morning', 'Sunrise', 'Dewdrops'];
-  String _selectedRingtone = 'Breeze';
+  final List<String> _ringtoneList = [
+    'Clank', 'Bubble', 'Spring', 'Chirp', 'Frog', 'Bottle', 'Burst', 'Potion', 'Bullfrog', 'Moment', 'Rhea', 'Swoosh', 'WindChime', 'Xylophone', 'Elara', 'Tethys', 'Fresh', 'Pop', 'Ariel', 'Ray', 'FadeOut', 'Crystal', 'FadeOut', 'Harp', 'Radar', 'Timer', 'Guitar', 'Flute'];
+  String _selectedRingtone = 'Clank';
 
   bool _isLoading = false;
   bool _titleFocused = false;
@@ -71,7 +72,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
 
   Future<void> _togglePlayPause() async {
     final String fileName = _selectedRingtone.toLowerCase();
-    final AssetSource source = AssetSource('audio/$fileName.ogg');
+    final AssetSource source = AssetSource('audio/notification_sounds/$fileName.ogg');
 
     if (_isPlaying) {
       // If currently playing, pause the audio
@@ -1072,6 +1073,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
                           child: Padding(
                             padding: const EdgeInsets.all(6),
                             child: IconButton(
+                              tooltip: _isPlaying? 'Pause' : 'Play',
                                 onPressed: () async {
                                   await _togglePlayPause();
                                   setModalState(() {});

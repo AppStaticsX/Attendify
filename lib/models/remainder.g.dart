@@ -22,14 +22,14 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       scheduledTime: fields[2] as DateTime,
       isCompleted: fields[3] as bool,
       description: fields[4] as String,
-      ringtone: fields[5] as String
+      ringtone: fields[5] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Reminder obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -39,7 +39,9 @@ class ReminderAdapter extends TypeAdapter<Reminder> {
       ..writeByte(3)
       ..write(obj.isCompleted)
       ..writeByte(4)
-      ..write(obj.description);
+      ..write(obj.description)
+      ..writeByte(5)
+      ..write(obj.ringtone);
   }
 
   @override

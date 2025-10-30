@@ -52,6 +52,13 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
     }
   }
 
+  String _formatTime12Hour(DateTime time) {
+    int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    String minute = time.minute.toString().padLeft(2, '0');
+    String period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,9 +176,9 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
 
                   // Reminder Details
                   Text(
-                    '${widget.scheduledTime.hour.toString().padLeft(2, '0')}:${widget.scheduledTime.minute.toString().padLeft(2, '0')} ${widget.scheduledTime.hour >= 12 ? 'PM' : 'AM'}',
+                    _formatTime12Hour(widget.scheduledTime),
                     style: TextStyle(
-                      fontSize: 44,
+                      fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                       shadows: const [
@@ -215,7 +222,7 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
                       shadowColor: Colors.black26,
                     ),
                     child: const Text(
-                      'DISMISS ALARM',
+                      'DISMISS REMINDER',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

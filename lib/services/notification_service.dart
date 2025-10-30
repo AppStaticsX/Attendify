@@ -34,8 +34,11 @@ void callbackDispatcher() {
           await notificationService.scheduleSimpleReminder(reminder);
         }
       }
+
+      print('Background task completed successfully');
       return Future.value(true);
     } catch (e) {
+      print('Background task error: $e');
       return Future.value(false);
     }
   });
@@ -117,11 +120,13 @@ class NotificationService {
           backoffPolicyDelay: const Duration(minutes: 5),
           existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
         );
+
+        print('WorkManager initialized successfully');
       } catch (e) {
-        //
+        print('Error initializing WorkManager: $e');
       }
     } else if (Platform.isIOS) {
-      //
+      print('iOS background fetch should be configured in native code');
     }
   }
 
@@ -129,6 +134,7 @@ class NotificationService {
   Future<void> cancelBackgroundTasks() async {
     if (Platform.isAndroid) {
       await Workmanager().cancelByUniqueName(UNIQUE_TASK_NAME);
+      print('Background tasks cancelled');
     }
   }
 
@@ -152,6 +158,7 @@ class NotificationService {
         // Mark reminder as completed
         reminder.isCompleted = true;
         await reminder.save();
+        print('Reminder marked as completed: $reminderId');
       }
     }
   }
@@ -166,8 +173,10 @@ class NotificationService {
 
       if (androidPlugin != null) {
         final bool? granted = await androidPlugin.requestNotificationsPermission();
+        print('Notification permission granted: $granted');
 
         final bool? exactAlarmGranted = await androidPlugin.requestExactAlarmsPermission();
+        print('Exact alarm permission granted: $exactAlarmGranted');
 
         return granted == true && exactAlarmGranted == true;
       }
@@ -205,6 +214,7 @@ class NotificationService {
   Future<void> scheduleSimpleReminder(Reminder reminder) async {
     final bool enabled = await areNotificationsEnabled();
     if (!enabled) {
+      print('Notifications are not enabled. Please enable them in settings.');
       return;
     }
 
@@ -216,8 +226,11 @@ class NotificationService {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
     if (scheduledDate.isBefore(now)) {
+      print('Cannot schedule reminder in the past. Scheduled: $scheduledDate, Now: $now');
       return;
     }
+
+    print('Scheduling notification for: $scheduledDate (Current time: $now)');
 
     AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'reminder_channel_id',
@@ -231,7 +244,6 @@ class NotificationService {
       ongoing: false,
       autoCancel: true,
       fullScreenIntent: true,
-      audioAttributesUsage: AudioAttributesUsage.alarm,
       sound: RawResourceAndroidNotificationSound(reminder.ringtone),
       category: AndroidNotificationCategory.alarm,
     );
@@ -258,8 +270,9 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: reminder.id.toString(),
       );
+      print('Successfully scheduled reminder ID: ${reminder.id} for $scheduledDate');
     } catch (e) {
-      //
+      print('Error scheduling notification: $e');
     }
   }
 
@@ -270,6 +283,7 @@ class NotificationService {
       ) async {
     final bool enabled = await areNotificationsEnabled();
     if (!enabled) {
+      print('Notifications are not enabled.');
       return;
     }
 
@@ -299,8 +313,9 @@ class NotificationService {
         payload: reminder.id.toString(),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+      print('Successfully scheduled repeating reminder');
     } catch (e) {
-      //
+      print('Error scheduling repeating notification: $e');
     }
   }
 
@@ -331,11 +346,13 @@ class NotificationService {
   // --- 10. CANCELLATION ---
   Future<void> cancelReminder(int id) async {
     await flutterLocalNotificationsPlugin.cancel(id);
+    print('Cancelled reminder ID: $id');
   }
 
   // --- 11. CANCEL ALL ---
   Future<void> cancelAllReminders() async {
     await flutterLocalNotificationsPlugin.cancelAll();
+    print('Cancelled all reminders');
   }
 
   // --- 12. GET PENDING NOTIFICATIONS ---
