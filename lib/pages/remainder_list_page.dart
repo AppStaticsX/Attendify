@@ -8,6 +8,14 @@ import 'add_remainder_page.dart';
 class ReminderListScreen extends StatelessWidget {
   const ReminderListScreen({super.key});
 
+  String _formatTime12Hour(DateTime time) {
+    int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    String hourStr = hour.toString().padLeft(2, '0');
+    String minute = time.minute.toString().padLeft(2, '0');
+    String period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hourStr:$minute $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     final Box<Reminder> reminderBox = Hive.box<Reminder>('reminders');
@@ -15,7 +23,7 @@ class ReminderListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GENERAL REMINDERS'),
+        title: const Text('Reminders'),
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
@@ -80,12 +88,12 @@ class ReminderListScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Top row with "Everyday" text and toggle
+                        // Top row with "Everyday" text and toggle//
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${reminder.scheduledTime.hour.toString().padLeft(2, '0')}:${reminder.scheduledTime.minute.toString().padLeft(2, '0')} ${reminder.scheduledTime.hour >= 12 ? 'PM' : 'AM'}',
+                              _formatTime12Hour(reminder.scheduledTime),
                               style: TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,

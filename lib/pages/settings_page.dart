@@ -22,12 +22,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'SETTINGS',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
+          'Settings',
         ),
         backgroundColor: Colors.transparent,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
-        centerTitle: true,
+        centerTitle: false,
         leading: IconButton(
             onPressed: () {
               Navigator.pop(context);

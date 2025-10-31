@@ -439,8 +439,7 @@ class _CreateEventPageState extends State<CreateEventPage>
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
-          'ADD NEW COURSE',
-          style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 2),
+          'Add New Course'
         ),
         leading: IconButton(
             onPressed: () {
@@ -451,7 +450,7 @@ class _CreateEventPageState extends State<CreateEventPage>
         backgroundColor: Colors.transparent,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 4,
-        centerTitle: true,
+        centerTitle: false,
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -962,7 +961,7 @@ class _CreateEventPageState extends State<CreateEventPage>
                 Icon(Iconsax.add_circle_copy, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  'CREATE COURSE',
+                  'Create Course',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

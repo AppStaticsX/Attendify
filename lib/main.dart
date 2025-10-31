@@ -34,7 +34,7 @@ void main() async {
   // Initialize the Notification Service with callback
   try {
     await _notificationService.init(
-      onNotificationReceived: (reminderId, scheduledTime, description) {
+      onNotificationReceived: (reminderId, scheduledTime, description, title) {
         // Navigate to AlarmOverlayPage when notification is received
         navigatorKey.currentState?.push(
           MaterialPageRoute(
@@ -42,6 +42,7 @@ void main() async {
               reminderId: reminderId,
               scheduledTime: scheduledTime,
               description: description,
+              title: title,
             ),
           ),
         );
@@ -139,6 +140,7 @@ class _AppInitializerState extends State<AppInitializer> {
                 reminderId: reminder.id,
                 scheduledTime: reminder.scheduledTime,
                 description: reminder.description,
+                title: reminder.title,
               )),
             );
             return; // Exit initialization, the alarm page is displayed

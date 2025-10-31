@@ -7,6 +7,7 @@ import 'dart:io';
 class AlarmOverlayPage extends StatefulWidget {
   final int reminderId;
   final DateTime scheduledTime;
+  final String title;
   final String description;
 
   const AlarmOverlayPage({
@@ -14,6 +15,7 @@ class AlarmOverlayPage extends StatefulWidget {
     required this.reminderId,
     required this.scheduledTime,
     required this.description,
+    required this.title,
   });
 
   @override
@@ -53,10 +55,11 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
   }
 
   String _formatTime12Hour(DateTime time) {
-    int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 0 ? 12 : time.hour);
+    int hour = time.hour > 12 ? time.hour - 12 : (time.hour == 00 ? 12 : time.hour);
+    String hourStr = hour.toString().padLeft(2, '0');
     String minute = time.minute.toString().padLeft(2, '0');
     String period = time.hour >= 12 ? 'PM' : 'AM';
-    return '$hour:$minute $period';
+    return '$hourStr:$minute $period';
   }
 
   @override
@@ -178,7 +181,7 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
                   Text(
                     _formatTime12Hour(widget.scheduledTime),
                     style: TextStyle(
-                      fontSize: 48,
+                      fontSize: 54,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                       shadows: const [
@@ -189,7 +192,34 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 36),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Lottie.asset(
+                        'assets/lottie/streaks-anim.json',
+                        width: 40
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text(
+                          widget.title,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 36,
+                            color: Colors.black,
+                            shadows: const [
+                              Shadow(
+                                blurRadius: 15,
+                                color: Colors.black12,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Text(
@@ -207,19 +237,19 @@ class _AlarmOverlayPageState extends State<AlarmOverlayPage>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 60),
 
                   // Dismiss Button
                   ElevatedButton(
                     onPressed: _closeApp,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade800,
+                      backgroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 40,
                         vertical: 15,
                       ),
                       elevation: 8,
-                      shadowColor: Colors.black26,
+                      shadowColor: Colors.black,
                     ),
                     child: const Text(
                       'DISMISS REMINDER',

@@ -506,8 +506,7 @@ class _EditEventPageState extends State<EditEventPage>
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
-          'EDIT COURSE',
-          style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 2),
+          'Edit Course',
         ),
         leading: IconButton(
             onPressed: () {
@@ -1029,7 +1028,7 @@ class _EditEventPageState extends State<EditEventPage>
                 Icon(Iconsax.tick_circle_copy, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  'UPDATE COURSE',
+                  'Update Course',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

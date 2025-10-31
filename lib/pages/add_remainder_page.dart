@@ -435,8 +435,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
-          'SET REMINDER',
-          style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 2),
+          'Set Reminder',
         ),
         leading: IconButton(
           onPressed: () {
@@ -447,7 +446,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
         backgroundColor: Colors.transparent,
         foregroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 4,
-        centerTitle: true,
+        centerTitle: false,
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -623,7 +622,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
                 const Icon(Iconsax.timer_start_copy, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  'SET REMINDER',
+                  'Set Reminder',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1001,7 +1000,7 @@ class _AddReminderScreenState extends State<AddReminderScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'REMINDER SETTINGS',
+                          'Reminder Settings',
                           style: TextStyle(
                               fontSize: 24
                           ),

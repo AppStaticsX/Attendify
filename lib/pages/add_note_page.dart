@@ -14,7 +14,7 @@ class _AddNotePageState extends State<AddNotePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'MY NOTES',
+          'My Notes',
           style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 2),
         ),
         leading: IconButton(

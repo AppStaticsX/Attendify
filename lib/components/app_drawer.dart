@@ -36,16 +36,16 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'ATTENDIFY',
+                    'Attendify',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inverseSurface,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 3,
+                      fontSize: 28,
+                      //fontWeight: FontWeight.bold,
+                      //letterSpacing: 3,
                     ),
                   ),
                   Text(
-                    'TRACK YOUR ATTENDANCE',
+                    'Track Your Attendance',
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 12,
@@ -69,12 +69,12 @@ class AppDrawer extends StatelessWidget {
                     size: 28,
                   ),
                   title: Text(
-                    'HOME',
+                    'Home',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      //fontWeight: FontWeight.bold,
+                      //letterSpacing: 4,
                     ),
                   ),
                   onTap: () {
@@ -91,12 +91,12 @@ class AppDrawer extends StatelessWidget {
                     size: 28,
                   ),
                   title: Text(
-                    'SETTINGS',
+                    'Settings',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      //fontWeight: FontWeight.bold,
+                      //letterSpacing: 4,
                     ),
                   ),
                   onTap: () {
@@ -117,12 +117,12 @@ class AppDrawer extends StatelessWidget {
                     size: 28,
                   ),
                   title: Text(
-                    'ANALYTICS',
+                    'Analytics',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      //fontWeight: FontWeight.bold,
+                      //letterSpacing: 4,
                     ),
                   ),
                   onTap: () {
@@ -141,12 +141,12 @@ class AppDrawer extends StatelessWidget {
                     size: 28,
                   ),
                   title: Text(
-                    'REMINDERS',
+                    'Reminders',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      //fontWeight: FontWeight.bold,
+                      //letterSpacing: 4,
                     ),
                   ),
                   onTap: () {
@@ -165,12 +165,12 @@ class AppDrawer extends StatelessWidget {
                     size: 28,
                   ),
                   title: Text(
-                    'MY-NOTES',
+                    'Notes',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
+                      //fontWeight: FontWeight.bold,
+                      //letterSpacing: 4,
                     ),
                   ),
                   onTap: () {
@@ -198,19 +198,19 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               title: Text(
-                'THEME',
+                'Theme',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.inversePrimary,
                   fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 4,
+                  //fontWeight: FontWeight.bold,
+                  //letterSpacing: 4,
                 ),
               ),
               subtitle: Consumer<ThemeProvider>( // Wrap subtitle in Consumer to access themeProvider
                 builder: (context, themeProvider, _) => Text(
                   themeProvider.isDarkMode
-                      ? 'Dark Mode is ON'.toUpperCase() // Dynamic text based on state
-                      : 'Dark Mode is OFF'.toUpperCase(), // Dynamic text based on state
+                      ? 'Dark Mode is ON' // Dynamic text based on state
+                      : 'Dark Mode is OFF', // Dynamic text based on state
                 ),
               ),
               subtitleTextStyle: TextStyle(color: Colors.grey, fontFamily: 'JetBrains Mono', fontSize: 12),

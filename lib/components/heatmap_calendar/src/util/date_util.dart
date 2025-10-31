@@ -19,29 +19,29 @@ class DateUtil {
 
   static const List<String> SHORT_MONTH_LABEL = [
     '',
-    'JAN',
-    'FEB',
-    'MAR',
-    'APR',
-    'MAY',
-    'JUN',
-    'JUL',
-    'AUG',
-    'SEPT',
-    'OCT',
-    'NOV',
-    'DEC',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   static const List<Map<String, String>> WEEK_LABEL = [
     {'label': '', 'color': ''},
-    {'label': 'SUN', 'color': 'red'}, // Changed to include red color for SUN
-    {'label': 'MON', 'color': 'black'},
-    {'label': 'TUE', 'color': 'black'},
-    {'label': 'WED', 'color': 'black'},
-    {'label': 'THU', 'color': 'black'},
-    {'label': 'FRI', 'color': 'black'},
-    {'label': 'SAT', 'color': 'grey'},
+    {'label': 'Sun', 'color': 'red'}, // Changed to include red color for SUN
+    {'label': 'Mon', 'color': 'black'},
+    {'label': 'Tue', 'color': 'black'},
+    {'label': 'Wed', 'color': 'black'},
+    {'label': 'Thu', 'color': 'black'},
+    {'label': 'Fri', 'color': 'black'},
+    {'label': 'Sat', 'color': 'grey'},
   ];
 
   /// Get start day of month.

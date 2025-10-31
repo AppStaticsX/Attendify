@@ -20,6 +20,10 @@ android {
         freeCompilerArgs = listOf("-Xlint:-options")
     }
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-Xlint:-options")
+    }
+
     defaultConfig {
         applicationId = "com.appstaticsx.app.attendify"
         minSdk = flutter.minSdkVersion

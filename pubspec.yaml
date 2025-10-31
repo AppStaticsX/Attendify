@@ -60,7 +60,7 @@ flutter:
   fonts:
     - family: JetBrains Mono
       fonts:
-        - asset: assets/font/JetBrains/JetBrainsMono-ExtraBold.ttf
+        - asset: assets/font/JetBrains/LibreBaskerville-Italic.ttf
 
 flutter_native_splash:
   color: "#1A1A1A"

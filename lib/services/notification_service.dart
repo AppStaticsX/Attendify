@@ -7,7 +7,7 @@ import 'package:workmanager/workmanager.dart';
 import '../models/remainder.dart';
 
 // Callback for when notification is received in foreground
-typedef OnNotificationReceived = void Function(int reminderId, DateTime scheduledTime, String description);
+typedef OnNotificationReceived = void Function(int reminderId, DateTime scheduledTime, String description, String title);
 
 // Background task callback - MUST be a top-level function
 @pragma('vm:entry-point')
@@ -153,6 +153,7 @@ class NotificationService {
           reminder.id,
           reminder.scheduledTime,
           reminder.description,
+          reminder.title
         );
 
         // Mark reminder as completed

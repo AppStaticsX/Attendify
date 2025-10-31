@@ -1,3 +1,4 @@
+import 'package:attendify/authentication/hybrid_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:attendify/pages/home_page.dart';
@@ -38,6 +39,18 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     }
   }
 
+  Future<void> _handleHybridAccountTap(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('welcomeShown', true);
+
+    if (context.mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HybridLoginPage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get system brightness
@@ -74,12 +87,11 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Text(
-                  'Attendify'.toUpperCase(),
+                  'Attendify',
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     color: primaryTextColor,
-                    letterSpacing: -0.5,
                   ),
                 ),
               ),
@@ -134,8 +146,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicatorAnimation: TabIndicatorAnimation.elastic,
                   tabs: const [
-                    Tab(text: 'GO OFFLINE'),
-                    Tab(text: 'GO HYBRID'),
+                    Tab(text: 'Go Offline'),
+                    Tab(text: 'Go Hybird'),
                   ],
                 ),
               ),
@@ -160,7 +172,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: HybridAccount(
-                        hybridAccountTap: () => _handleOfflineAccountTap(context),
+                        hybridAccountTap: () => _handleHybridAccountTap(context),
                         isDarkMode: isDarkMode,
                         primaryTextColor: primaryTextColor,
                         secondaryTextColor: secondaryTextColor,
@@ -246,9 +258,9 @@ class OfflineAccount extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ENTER WITH OFFLINE ACCOUNT',
+          'Enter with Offline Account',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             color: primaryTextColor,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
@@ -329,9 +341,9 @@ class HybridAccount extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'ENTER WITH HYBRID ACCOUNT',
+          'Enter with Hybrid Account',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             color: primaryTextColor,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
